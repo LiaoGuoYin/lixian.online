@@ -23,14 +23,16 @@ export default function Home() {
       <Tabs isFitted variant="enclosed">
         <TabList mb="1em">
           <Tab>VSCode 插件下载</Tab>
-          {/* <Tab>Docker 镜像下载</Tab> */}
+          <Tab>Docker 镜像下载</Tab>
         </TabList>
 
         <TabPanels>
           <TabPanel>
             <VSCodeDownloader />
           </TabPanel>
-          <TabPanel>{/* <DockerDownloader /> */}</TabPanel>
+          <TabPanel>
+            <DockerDownloader />
+          </TabPanel>
         </TabPanels>
       </Tabs>
     </Container>

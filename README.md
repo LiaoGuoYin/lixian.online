@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Down2.online
 
-## Getting Started
 
-First, run the development server:
+## LLM 提示词
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+实现一个 Web 端的离线下载工具助手。目前的核心功能是：vscode 插件离线下载、Docker 镜像离线下载。请基于以下想法初始化项目，并实现具有可维护性的代码。
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+vscode 插件离线下载：
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- 下载流程：
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+  1. 用户输入要下载的 vscode 网址，网页解析真实的下载地址，跳转新页面下载 vscode 插件
+  2. 网页解析流程：
 
-## Learn More
+     - 比如用户输入插件地址：
 
-To learn more about Next.js, take a look at the following resources:
+       https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev
+     - 通过接口获取到版本号 11.0：
+     - 拼接得到下载链接：https://marketplace.visualstudio.com/_apis/public/gallery/publishers/saoudrizwan/vsextensions/claude-dev/11.0.0/vspackage
+- 其他产品：
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+  - 脚本：https://github.com/gni/offvsix/blob/main/offvsix/main.py
+  - Issues: https://github.com/microsoft/vsmarketplace/issues/238#issuecomment-1378486673
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Docker 镜像离线下载：
 
-## Deploy on Vercel
+- 相似产品：
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+  - Chrome 插件：https://chromewebstore.google.com/detail/docker-image-downloader/dfpojffmnkiglpjpjodlpmoejdcfobnd?pli=1
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    - [下载器原理](https://www.v2ex.com/t/1110052)：
+
+      * 根据 Docker Registry HTTP API 来模拟 docker pull 的行为
+      * 将下载下来的 layers 根据 docker load 支持的格式组装起来，配合 [tar-stream](https://github.com/mafintosh/tar-stream/blob/master/pack.js) 直接流式打包
+      * chrome extension v3 支持 service-worker ，service-worker 支持 Fetch Event 可以让用户在浏览器的下载器中直接下载上一步流式打包的 tar 文件
+  - 脚本1: https://github.com/meetyourturik/dockerless-docker-downloader
+  - 脚本2: https://github.com/NotGlop/docker-drag
+  - 其他参考：
+
+    - https://www.v2ex.com/t/1117273
