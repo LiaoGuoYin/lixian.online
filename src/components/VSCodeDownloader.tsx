@@ -1,24 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
-  Box,
-  Input,
-  Button,
-  VStack,
-  Text,
-  useToast,
-  Link,
   Select,
-} from "@chakra-ui/react";
-import axios from "axios";
-import { get } from "lodash";
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/useToast";
+import { Card, CardContent } from "@/components/ui/card";
+import { Download, Link as LinkIcon } from "lucide-react";
 
-// https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery
-function getVersionList(
-  publisher: string,
-  extension: string
-): Promise<string[]> {
+import { post } from "@/utils/http";
+import { useStore } from "@/stores/useStore";
+
+async function getVersionList(publisher: string, extension: string) {
   const url = `https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery`;
   const payload = {
     filters: [
@@ -37,44 +36,41 @@ function getVersionList(
     ],
     flags: 402,
   };
-  const headers = {
-    "Content-Type": "application/json",
-    Accept: "application/json;api-version=3.0-preview.1",
-  };
 
-  // request with headers
-  return axios
-    .post(url, payload, { headers })
-    .then((response) => {
-      console.log(response.data);
-      const versions = response.data.results[0].extensions[0].versions.map(
-        (each: any) => {
-          return each.version;
-        }
-      );
-      return versions;
-    })
-    .catch((error) => {
-      console.error("Error fetching version list:", error);
-      throw error;
-    });
+  const response = await post(url, payload);
+  const versions = response.data.results[0].extensions[0].versions.map(
+    (each: any) => {
+      return each.version;
+    }
+  );
+
+  const {
+    publisher: publisherDict,
+    lastUpdated,
+    shortDescription,
+    versions: versionList,
+  } = response.data.results[0].extensions[0];
+
+  console.log(publisherDict, lastUpdated, shortDescription, versionList);
+
+  return { lastUpdated, shortDescription, versionList };
 }
 
 export default function VSCodeDownloader() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [versions, setVersions] = useState<string[]>([]);
   const [selectedVersion, setSelectedVersion] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [publisher, setPublisher] = useState("");
   const [extension, setExtension] = useState("");
-  const toast = useToast();
+  const { versionList, setVersionList } = useStore();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setDownloadUrl("");
-    setVersions([]);
+    // setVersions([]);
     setSelectedVersion("");
 
     try {
@@ -90,29 +86,24 @@ export default function VSCodeDownloader() {
       setExtension(ext);
 
       // 获取版本列表
-      const versionList = await getVersionList(pub, ext);
+      const { versionList } = await getVersionList(pub, ext);
+      setVersionList(versionList);
+      setSelectedVersion(versionList[0].version);
+
       if (versionList.length === 0) {
         throw new Error("未找到插件版本");
       }
 
-      setVersions(versionList);
-      setSelectedVersion(versionList[0]);
-
       toast({
         title: "解析成功",
-        description: "已找到可用版本",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
+        description: "成功解析插件离线链接，并选中最新版本",
       });
     } catch (error) {
       toast({
         title: "解析失败",
         description:
           error instanceof Error ? error.message : "请检查 URL 是否正确",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -126,46 +117,85 @@ export default function VSCodeDownloader() {
   };
 
   return (
-    <Box as="form" onSubmit={handleSubmit}>
-      <VStack spacing={4}>
-        <Input
-          placeholder="请输入 VSCode 插件 URL"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          size="lg"
-        />
-        <Button
-          type="submit"
-          colorScheme="blue"
-          isLoading={loading}
-          loadingText="解析中..."
-        >
-          解析下载链接
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">插件 URL</label>
+          <Input
+            placeholder="请输入 VSCode 插件 URL"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              解析中...
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <LinkIcon className="h-4 w-4" />
+              解析下载链接
+            </span>
+          )}
         </Button>
+      </div>
 
-        {versions.length > 0 && (
-          <Select
-            value={selectedVersion}
-            onChange={(e) => handleVersionChange(e.target.value)}
-            size="lg"
-          >
-            {versions.map((version) => (
-              <option key={version} value={version}>
-                {version}
-              </option>
-            ))}
+      {versionList.length > 0 && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">选择版本</label>
+          <Select value={selectedVersion} onValueChange={handleVersionChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="选择版本" />
+            </SelectTrigger>
+            <SelectContent>
+              {versionList.map((vl) => (
+                <SelectItem key={vl.version} value={vl.version}>
+                  {vl.version} - {vl.lastUpdated}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
-        )}
+        </div>
+      )}
 
-        {downloadUrl && (
-          <Box w="100%" p={4} borderWidth={1} borderRadius="md">
-            <Text mb={2}>下载链接：</Text>
-            <Link href={downloadUrl} color="blue.500" isExternal>
+      {downloadUrl && (
+        <Card className="border border-blue-100 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Download className="h-4 w-4 text-blue-500" />
+              <span className="text-sm font-medium text-gray-700">
+                下载链接
+              </span>
+            </div>
+            <a
+              href={downloadUrl}
+              className="text-blue-600 hover:text-blue-800 hover:underline break-all"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {downloadUrl}
-            </Link>
-          </Box>
-        )}
-      </VStack>
-    </Box>
+            </a>
+          </CardContent>
+        </Card>
+      )}
+    </form>
   );
 }
