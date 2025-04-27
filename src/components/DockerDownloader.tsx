@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Download, Link as LinkIcon } from "lucide-react";
 
 export default function DockerDownloader() {
+  const [isInDraft, setIsInDraft] = useState(true);
   const [image, setImage] = useState("");
   const [tag, setTag] = useState("latest");
   const [loading, setLoading] = useState(false);
@@ -62,6 +63,9 @@ export default function DockerDownloader() {
     }
   };
 
+  if (isInDraft) {
+    return <div>TODO</div>;
+  }
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">

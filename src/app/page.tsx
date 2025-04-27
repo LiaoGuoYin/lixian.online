@@ -20,7 +20,7 @@ export default function Home() {
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
               OfflineDown - 开发插件下载
             </h1>
-            <p className="text-lg text-gray-600">解析一下，点一下，一下就好</p>
+            <p className="text-lg text-gray-600">解析一下，一下就好</p>
           </div>
 
           <Card className="shadow-lg">
@@ -29,17 +29,11 @@ export default function Home() {
               <Tabs defaultValue="vscode" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="vscode">VSCode 插件下载</TabsTrigger>
-                  <TabsTrigger value="docker">Docker 镜像下载</TabsTrigger>
+                  <TabsTrigger value="docker">TODO 拓展下载</TabsTrigger>
                 </TabsList>
                 <div className="mt-6">
                   <TabsContent value="vscode">
                     <Card className="border-0 shadow-none">
-                      <CardHeader>
-                        <CardTitle>VSCode 插件下载</CardTitle>
-                        <CardDescription>
-                          输入 VSCode 插件 URL，获取离线下载链接
-                        </CardDescription>
-                      </CardHeader>
                       <CardContent>
                         <VSCodeDownloader />
                       </CardContent>
@@ -47,12 +41,6 @@ export default function Home() {
                   </TabsContent>
                   <TabsContent value="docker">
                     <Card className="border-0 shadow-none">
-                      <CardHeader>
-                        <CardTitle>Docker 镜像下载</CardTitle>
-                        <CardDescription>
-                          输入 Docker 镜像名称，获取离线下载链接
-                        </CardDescription>
-                      </CardHeader>
                       <CardContent>
                         <DockerDownloader />
                       </CardContent>
