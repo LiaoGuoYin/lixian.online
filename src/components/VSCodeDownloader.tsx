@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,85 +12,48 @@ import { useToast } from "@/hooks/useToast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Download, Link as LinkIcon } from "lucide-react";
 
-import { post } from "@/utils/http";
-import { useStore } from "@/stores/useStore";
-
-async function getVersionList(publisher: string, extension: string) {
-  const url = `https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery`;
-  const payload = {
-    filters: [
-      {
-        criteria: [
-          {
-            filterType: 7,
-            value: `${publisher}.${extension}`,
-          },
-        ],
-        pageNumber: 1,
-        pageSize: 100,
-        sortBy: 0,
-        sortOrder: 0,
-      },
-    ],
-    flags: 402,
-  };
-
-  const response = await post(url, payload);
-  const versions = response.data.results[0].extensions[0].versions.map(
-    (each: any) => {
-      return each.version;
-    }
-  );
-
-  const {
-    publisher: publisherDict,
-    lastUpdated,
-    shortDescription,
-    versions: versionList,
-  } = response.data.results[0].extensions[0];
-
-  console.log(publisherDict, lastUpdated, shortDescription, versionList);
-
-  return { lastUpdated, shortDescription, versionList };
-}
+import { VSCodeStore } from "@/stores/VSCodeStore";
 
 export default function VSCodeDownloader() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState("");
-  const [downloadUrl, setDownloadUrl] = useState("");
-  const [publisher, setPublisher] = useState("");
-  const [extension, setExtension] = useState("");
-  const { versionList, setVersionList } = useStore();
   const { toast } = useToast();
+
+  const {
+    downloadUrl,
+    loadExtensionInfo,
+    loadExtensionVersionList,
+    extensionVersionList,
+    getDownloadUrl,
+  } = VSCodeStore();
+
+  useEffect(() => {
+    if (extensionVersionList.length > 0) {
+      // 自动选择最新版本
+      setSelectedVersion(extensionVersionList[0]);
+    }
+  }, [extensionVersionList]);
+
+  useEffect(() => {
+    if (selectedVersion) {
+      getDownloadUrl(selectedVersion);
+    }
+  }, [selectedVersion]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setDownloadUrl("");
-    // setVersions([]);
-    setSelectedVersion("");
+    setSelectedVersion(""); // 重置选中的版本
 
     try {
-      // 从 URL 中提取发布者和扩展名
-      const urlObj = new URL(url);
-      const itemName = urlObj.searchParams.get("itemName");
-      if (!itemName) {
-        throw new Error("无效的插件 URL");
+      if (!url) {
+        throw new Error("请输入插件 URL");
       }
 
-      const [pub, ext] = itemName.split(".");
-      setPublisher(pub);
-      setExtension(ext);
-
-      // 获取版本列表
-      const { versionList } = await getVersionList(pub, ext);
-      setVersionList(versionList);
-      setSelectedVersion(versionList[0].version);
-
-      if (versionList.length === 0) {
-        throw new Error("未找到插件版本");
-      }
+      // 加载插件信息
+      await loadExtensionInfo(url);
+      await loadExtensionVersionList();
 
       toast({
         title: "解析成功",
@@ -108,12 +69,6 @@ export default function VSCodeDownloader() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleVersionChange = (version: string) => {
-    setSelectedVersion(version);
-    const downloadUrl = `https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${publisher}/vsextensions/${extension}/${version}/vspackage`;
-    setDownloadUrl(downloadUrl);
   };
 
   return (
@@ -158,17 +113,17 @@ export default function VSCodeDownloader() {
         </Button>
       </div>
 
-      {versionList.length > 0 && (
+      {extensionVersionList.length > 0 && (
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700">选择版本</label>
-          <Select value={selectedVersion} onValueChange={handleVersionChange}>
+          <Select value={selectedVersion} onValueChange={setSelectedVersion}>
             <SelectTrigger>
               <SelectValue placeholder="选择版本" />
             </SelectTrigger>
             <SelectContent>
-              {versionList.map((vl) => (
-                <SelectItem key={vl.version} value={vl.version}>
-                  {vl.version} - {vl.lastUpdated}
+              {extensionVersionList.map((vl) => (
+                <SelectItem key={vl} value={vl}>
+                  {vl}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -176,7 +131,7 @@ export default function VSCodeDownloader() {
         </div>
       )}
 
-      {downloadUrl && (
+      {selectedVersion && (
         <Card className="border border-blue-100 bg-blue-50">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -191,7 +146,7 @@ export default function VSCodeDownloader() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              {downloadUrl}
+              版本: {selectedVersion}
             </a>
           </CardContent>
         </Card>
