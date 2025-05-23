@@ -11,8 +11,8 @@ export const get = (url: string, params: any) => {
 };
 
 // POST
-export const post = (url: string, data: any, params?: any) => {
-  return axios.post(url, data, { headers, params });
+export const post = (url: string, payload?: any) => {
+  return axios.post(url, payload, { headers });
 };
 
 // PUT
