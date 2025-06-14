@@ -24,7 +24,6 @@ vscode 插件离线下载：
 Docker 镜像离线下载：
 
 - 相似产品：
-
   - Chrome 插件：https://chromewebstore.google.com/detail/docker-image-downloader/dfpojffmnkiglpjpjodlpmoejdcfobnd?pli=1
 
     - [下载器原理](https://www.v2ex.com/t/1110052)：
@@ -37,3 +36,9 @@ Docker 镜像离线下载：
   - 其他参考：
 
     - https://www.v2ex.com/t/1117273
+
+TODO
+
+* [ ] 官网跳转
+* [ ] ICON 显示
+* [ ] Step 分步骤下载

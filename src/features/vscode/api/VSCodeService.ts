@@ -1,8 +1,11 @@
-import { ExtensionInfo, VersionInfo } from "@/types/VSCode";
-import { post } from "@/utils/http";
+import { ExtensionInfo, VersionInfo } from "@/features/vscode/types";
+import { post } from "@/shared/lib/http";
 
 class VSCodeService {
   extractExtensionInfo(url: string): ExtensionInfo {
+    if (!url) {
+      return { publisher: "", extension: "", version: null };
+    }
     const urlObj = new URL(url);
     const itemName = urlObj.searchParams.get("itemName");
     if (!itemName) {
@@ -14,7 +17,7 @@ class VSCodeService {
     return { publisher: pub, extension: ext, version: null };
   }
 
-  async getVersionList(extensionInfo: ExtensionInfo): Promise<VersionInfo> {
+  async getVersionList(extensionInfo: ExtensionInfo): Promise<string[]> {
     const url = `https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery`;
     const payload = {
       filters: [
@@ -44,11 +47,12 @@ class VSCodeService {
     } = response.data.results[0].extensions[0];
 
     const versionNumbers = versionList.map((v: any) => v.version);
-    return {
-      lastUpdated,
-      shortDescription,
-      versionList: versionNumbers,
-    };
+    // return {
+    //   lastUpdated,
+    //   shortDescription,
+    //   versionList: versionNumbers,
+    // } as VersionInfo;
+    return versionNumbers;
   }
 
   async getDownloadUrl(extensionInfo: ExtensionInfo): Promise<string> {

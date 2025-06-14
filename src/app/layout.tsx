@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
-
-const inter = Inter({ subsets: ["latin"] });
+import { Toaster } from "@/shared/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "OffDown - 离线下载工具",
-  description: "一个简单的离线下载工具，支持 VSCode 插件和 Docker 镜像下载",
+  title: "OffDown - 开发套件下载工具",
+  description: "简洁、高效的开发套件下载工具，专为开发者打造",
+  keywords: ["开发工具", "下载", "VSCode", "插件", "开发者工具"],
+  authors: [{ name: "OffDown Team" }],
+  viewport: "width=device-width, initial-scale=1",
+  themeColor: "#007AFF",
 };
 
 export default function RootLayout({
@@ -16,9 +17,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh">
-      <body className={inter.className}>
-        {children}
+    <html lang="zh" className="antialiased">
+      <body className="font-sans">
+        <div className="min-h-screen bg-background text-foreground">
+          {children}
+        </div>
         <Toaster />
       </body>
     </html>

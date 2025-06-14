@@ -4,57 +4,74 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem
+    /* Apple-inspired color palette */
+    --background: 255 255 255;
+    --foreground: 29 29 31;
+    --card: 255 255 255;
+    --card-foreground: 29 29 31;
+    --popover: 255 255 255;
+    --popover-foreground: 29 29 31;
+    --primary: 0 122 255;
+    --primary-foreground: 255 255 255;
+    --secondary: 245 245 247;
+    --secondary-foreground: 29 29 31;
+    --muted: 250 250 252;
+    --muted-foreground: 134 142 150;
+    --accent: 0 122 255;
+    --accent-foreground: 255 255 255;
+    --destructive: 255 59 48;
+    --destructive-foreground: 255 255 255;
+    --border: 229 229 234;
+    --input: 229 229 234;
+    --ring: 0 122 255;
+    --chart-1: 52 199 89;
+    --chart-2: 255 149 0;
+    --chart-3: 255 59 48;
+    --chart-4: 88 86 214;
+    --chart-5: 255 45 85;
+    --radius: 12px;
+    
+    /* Apple-specific design tokens */
+    --apple-gray-1: 142 142 147;
+    --apple-gray-2: 174 174 178;
+    --apple-gray-3: 199 199 204;
+    --apple-gray-4: 209 209 214;
+    --apple-gray-5: 229 229 234;
+    --apple-gray-6: 242 242 247;
   }
+  
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%
+    --background: 0 0 0;
+    --foreground: 255 255 255;
+    --card: 28 28 30;
+    --card-foreground: 255 255 255;
+    --popover: 28 28 30;
+    --popover-foreground: 255 255 255;
+    --primary: 10 132 255;
+    --primary-foreground: 255 255 255;
+    --secondary: 44 44 46;
+    --secondary-foreground: 255 255 255;
+    --muted: 44 44 46;
+    --muted-foreground: 142 142 147;
+    --accent: 10 132 255;
+    --accent-foreground: 255 255 255;
+    --destructive: 255 69 58;
+    --destructive-foreground: 255 255 255;
+    --border: 58 58 60;
+    --input: 58 58 60;
+    --ring: 10 132 255;
+    --chart-1: 48 209 88;
+    --chart-2: 255 159 10;
+    --chart-3: 255 69 58;
+    --chart-4: 94 92 230;
+    --chart-5: 255 55 95;
+    
+    --apple-gray-1: 142 142 147;
+    --apple-gray-2: 99 99 102;
+    --apple-gray-3: 72 72 74;
+    --apple-gray-4: 58 58 60;
+    --apple-gray-5: 44 44 46;
+    --apple-gray-6: 28 28 30;
   }
 }
 
@@ -62,7 +79,89 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100vh;
+    background: rgb(var(--background));
+  }
+  
+  /* Apple-style typography scale */
+  .text-display {
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+  }
+  
+  .text-headline {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+  
+  .text-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  
+  .text-body {
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+  
+  .text-caption {
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.4;
+    color: rgb(var(--muted-foreground));
+  }
+  
+  /* Apple-style glass morphism effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  
+  .glass-dark {
+    background: rgba(28, 28, 30, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  /* Apple-style shadows */
+  .shadow-apple {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 6px rgba(0, 0, 0, 0.04);
+  }
+  
+  .shadow-apple-lg {
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Smooth transitions for all interactive elements */
+  button, a, [role="button"] {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Improved focus states */
+  *:focus-visible {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
+    border-radius: var(--radius);
   }
 }
