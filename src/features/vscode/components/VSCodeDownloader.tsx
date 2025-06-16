@@ -47,8 +47,8 @@ export default function VSCodeDownloader() {
     const success = await handlePasteFromClipboard();
     if (success) {
       toast({
-        title: "粘贴成功",
-        description: "已从剪切板粘贴 VSCode 插件 URL",
+        title: "解析成功",
+        description: "已自动粘贴并解析插件信息，选中最新版本",
       });
     } else {
       toast({

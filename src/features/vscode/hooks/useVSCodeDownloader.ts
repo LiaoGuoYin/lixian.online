@@ -25,10 +25,34 @@ export function useVSCodeDownloader() {
       const clipboardText = await navigator.clipboard.readText();
       if (clipboardText && clipboardText.includes('marketplace.visualstudio.com')) {
         setUrl(clipboardText);
-        setExtensionInfo({
-          ...vscodeService.extractExtensionInfo(clipboardText),
-          version: null,
-        });
+        const extractedInfo = vscodeService.extractExtensionInfo(clipboardText);
+        
+        // 获取版本列表并自动选择最新版本
+        try {
+          const versions = await vscodeService.getVersionList(extractedInfo);
+          setVersionList(versions);
+          
+          // 选择最新版本（第一个版本通常是最新的）
+          const latestVersion = versions[0];
+          if (latestVersion) {
+            setExtensionInfo({
+              ...extractedInfo,
+              version: latestVersion,
+            });
+          } else {
+            setExtensionInfo({
+              ...extractedInfo,
+              version: null,
+            });
+          }
+        } catch (error) {
+          console.warn('获取版本列表失败:', error);
+          setExtensionInfo({
+            ...extractedInfo,
+            version: null,
+          });
+        }
+        
         return true;
       }
       return false;
