@@ -23,6 +23,7 @@ export default function VSCodeDownloader() {
     onUrlChange,
     onVersionChange,
     handleSubmit,
+    handlePasteFromClipboard,
   } = useVSCodeDownloader();
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -42,6 +43,22 @@ export default function VSCodeDownloader() {
     }
   };
 
+  const handleInputDoubleClick = async () => {
+    const success = await handlePasteFromClipboard();
+    if (success) {
+      toast({
+        title: "粘贴成功",
+        description: "已从剪切板粘贴 VSCode 插件 URL",
+      });
+    } else {
+      toast({
+        title: "粘贴失败",
+        description: "剪切板中没有有效的 VSCode 插件 URL",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-8">
       <div className="space-y-4">
@@ -53,6 +70,7 @@ export default function VSCodeDownloader() {
             placeholder="请输入 VSCode 插件 URL"
             value={url}
             onChange={onUrlChange}
+            onDoubleClick={handleInputDoubleClick}
             className="w-full transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
