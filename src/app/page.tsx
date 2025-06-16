@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { Card, CardContent } from "@/shared/ui/card";
 import VSCodeDownloader from "@/features/vscode/components/VSCodeDownloader";
 import DockerDownloader from "@/features/docker/components/DockerDownloader";
+import ChromeDownloader from "@/features/chrome/components/ChromeDownloader";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("vscode");
@@ -32,18 +33,24 @@ export default function Home() {
                   onValueChange={setActiveTab}
                   className="w-full"
                 >
-                  <TabsList className="grid w-full grid-cols-2 bg-secondary/60 backdrop-blur-sm rounded-apple p-1 border border-border/40 h-50">
+                  <TabsList className="grid w-full grid-cols-3 bg-secondary/60 backdrop-blur-sm rounded-apple p-1 border border-border/40 h-50">
                     <TabsTrigger
                       value="vscode"
                       className="rounded-apple-sm font-medium text-sm py-3 px-6 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200"
                     >
-                      VSCode 插件下载
+                      VSCode 插件
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="chrome"
+                      className="rounded-apple-sm font-medium text-sm py-3 px-6 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200"
+                    >
+                      Chrome 扩展
                     </TabsTrigger>
                     <TabsTrigger
                       value="docker"
                       className="rounded-apple-sm font-medium text-sm py-3 px-6 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200"
                     >
-                      更多工具
+                      Docker 镜像
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
@@ -59,6 +66,15 @@ export default function Home() {
                   }`}
                 >
                   <VSCodeDownloader />
+                </div>
+                <div
+                  className={`transition-all duration-300 ${
+                    activeTab === "chrome"
+                      ? "opacity-100 transform translate-y-0"
+                      : "opacity-0 transform translate-y-2 pointer-events-none absolute"
+                  }`}
+                >
+                  <ChromeDownloader />
                 </div>
                 <div
                   className={`transition-all duration-300 ${
