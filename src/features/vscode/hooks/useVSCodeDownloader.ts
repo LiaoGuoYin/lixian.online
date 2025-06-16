@@ -20,6 +20,24 @@ export function useVSCodeDownloader() {
     });
   }, []);
 
+  const handlePasteFromClipboard = useCallback(async () => {
+    try {
+      const clipboardText = await navigator.clipboard.readText();
+      if (clipboardText && clipboardText.includes('marketplace.visualstudio.com')) {
+        setUrl(clipboardText);
+        setExtensionInfo({
+          ...vscodeService.extractExtensionInfo(clipboardText),
+          version: null,
+        });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.warn('无法读取剪切板内容:', error);
+      return false;
+    }
+  }, []);
+
   const onVersionChange = useCallback(
     (value: string) => {
       if (extensionInfo) {
@@ -67,5 +85,6 @@ export function useVSCodeDownloader() {
     onUrlChange,
     onVersionChange,
     handleSubmit,
+    handlePasteFromClipboard,
   };
 }
