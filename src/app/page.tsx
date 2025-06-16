@@ -20,7 +20,7 @@ export default function Home() {
               OffDown
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              开发套件下载工具
+              开发套件下载助手
             </p>
           </div>
 

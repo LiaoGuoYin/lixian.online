@@ -3,8 +3,8 @@ import "./globals.css";
 import { Toaster } from "@/shared/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "OffDown - 开发套件下载工具",
-  description: "简洁、高效的开发套件下载工具，专为开发者打造",
+  title: "OffDown - 开发套件下载助手",
+  description: "离线下载 VSCode 插件、Chrome 扩展、Docker 镜像",
   keywords: ["开发工具", "下载", "VSCode", "插件", "开发者工具"],
   authors: [{ name: "OffDown Team" }],
   viewport: "width=device-width, initial-scale=1",
