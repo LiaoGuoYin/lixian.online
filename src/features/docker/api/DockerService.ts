@@ -1,5 +1,6 @@
 import { DockerImageInfo, DockerManifest } from "@/features/docker/types";
 import { get } from "@/shared/lib/http";
+import { TarBuilder } from "@/features/docker/utils/tarBuilder";
 
 class DockerService {
   extractImageInfo(imageUrl: string): DockerImageInfo {
@@ -22,7 +23,7 @@ class DockerService {
         const [, namespace, repository] = match;
         return {
           registry: "docker.io",
-          namespace: namespace === 'library' ? '' : namespace,
+          namespace: namespace,
           repository,
           tag: "latest"
         };
@@ -39,13 +40,14 @@ class DockerService {
     if (parts.length === 1) {
       // nginx:latest
       const [repo, tagPart] = parts[0].split(':');
+      namespace = "library"; // 默认使用 library namespace
       repository = repo;
       tag = tagPart || "latest";
     } else if (parts.length === 2) {
       // library/nginx:latest
       const [ns, repoWithTag] = parts;
       const [repo, tagPart] = repoWithTag.split(':');
-      namespace = ns === 'library' ? '' : ns;
+      namespace = ns;
       repository = repo;
       tag = tagPart || "latest";
     } else if (parts.length === 3) {
@@ -53,7 +55,7 @@ class DockerService {
       const [reg, ns, repoWithTag] = parts;
       const [repo, tagPart] = repoWithTag.split(':');
       registry = reg;
-      namespace = ns === 'library' ? '' : ns;
+      namespace = ns;
       repository = repo;
       tag = tagPart || "latest";
     }
@@ -80,11 +82,17 @@ class DockerService {
   async getManifest(imageInfo: DockerImageInfo): Promise<DockerManifest> {
     const namespace = imageInfo.namespace || 'library';
     
+    console.log('getManifest 请求:', { imageInfo, namespace });
+    
     try {
       // 首先通过代理获取认证令牌
       const authUrl = `/api/docker/auth?namespace=${namespace}&repository=${imageInfo.repository}`;
+      console.log('认证 URL:', authUrl);
+      
       const authResponse = await get(authUrl, {});
       const token = authResponse.data.token;
+      
+      console.log('认证响应:', { hasToken: !!token, tokenLength: token?.length });
       
       // 使用代理获取清单
       const manifestUrl = `/api/docker/manifest?namespace=${namespace}&repository=${imageInfo.repository}&tag=${imageInfo.tag}&token=${token}`;
@@ -123,13 +131,11 @@ class DockerService {
 
   async downloadLayer(imageInfo: DockerImageInfo, digest: string, token: string): Promise<Blob> {
     const namespace = imageInfo.namespace || 'library';
-    const layerUrl = `https://registry-1.docker.io/v2/${namespace}/${imageInfo.repository}/blobs/${digest}`;
     
-    const response = await fetch(layerUrl, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      }
-    });
+    // 使用代理 API 避免 CORS 问题
+    const layerUrl = `/api/docker/layer?namespace=${namespace}&repository=${imageInfo.repository}&digest=${digest}&token=${encodeURIComponent(token)}`;
+    
+    const response = await fetch(layerUrl);
     
     if (!response.ok) {
       throw new Error(`下载层失败: ${response.statusText}`);
@@ -138,11 +144,7 @@ class DockerService {
     return response.blob();
   }
 
-  generateDockerLoadTar(manifest: DockerManifest, layers: Blob[], imageInfo: DockerImageInfo): Blob {
-    // 这里需要实现 docker load 格式的 tar 打包
-    // 由于浏览器环境限制，这里返回一个占位符
-    // 实际实现需要使用 tar-stream 库来创建符合 docker load 格式的 tar 文件
-    
+  async generateDockerLoadTar(manifest: DockerManifest, layers: Blob[], imageInfo: DockerImageInfo): Promise<Blob> {
     // 容错处理
     const safeLayers = layers || [];
     const safeManifest = manifest || {};
@@ -154,10 +156,140 @@ class DockerService {
       manifestLayerCount: manifestLayers.length,
       imageInfo
     });
+
+    const tarBuilder = new TarBuilder();
     
-    // 临时返回空 Blob，实际实现需要使用 tar-stream
-    const filename = this.getDownloadFilename(imageInfo);
-    return new Blob([`Docker image tar placeholder for ${filename}`], { type: 'application/x-tar' });
+    // 构建 Docker Load 格式的 TAR 文件
+    await this.buildDockerLoadTar(tarBuilder, safeManifest, safeLayers, imageInfo);
+    
+    const tarData = tarBuilder.build();
+    console.log('TAR 文件大小:', tarData.length, 'bytes');
+    
+    return new Blob([tarData], { type: 'application/x-tar' });
+  }
+
+  private async buildDockerLoadTar(
+    tarBuilder: TarBuilder, 
+    manifest: DockerManifest, 
+    layers: Blob[], 
+    imageInfo: DockerImageInfo
+  ): Promise<void> {
+    const namespace = imageInfo.namespace || 'library';
+    const fullImageName = namespace ? `${namespace}/${imageInfo.repository}` : imageInfo.repository;
+    const imageTag = `${fullImageName}:${imageInfo.tag}`;
+    
+    // 生成唯一的 image ID (使用简化的哈希)
+    const imageId = this.generateImageId(imageTag);
+    
+    // 1. 添加 manifest.json (Docker Load 格式要求)
+    const manifestJson = [{
+      Config: `${imageId}.json`,
+      RepoTags: [imageTag],
+      Layers: manifest.layers?.map((_, index) => `${this.generateLayerId(manifest.layers![index].digest)}/layer.tar`) || []
+    }];
+    
+    tarBuilder.addFile('manifest.json', JSON.stringify(manifestJson));
+    
+    // 2. 添加 config.json (镜像配置)
+    const configJson = {
+      architecture: "amd64",
+      config: {
+        Hostname: "",
+        Domainname: "",
+        User: "",
+        AttachStdin: false,
+        AttachStdout: false,
+        AttachStderr: false,
+        Tty: false,
+        OpenStdin: false,
+        StdinOnce: false,
+        Env: ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
+        Cmd: null,
+        Image: "",
+        Volumes: null,
+        WorkingDir: "",
+        Entrypoint: null,
+        OnBuild: null,
+        Labels: null
+      },
+      container_config: {
+        Hostname: "",
+        Domainname: "",
+        User: "",
+        AttachStdin: false,
+        AttachStdout: false,
+        AttachStderr: false,
+        Tty: false,
+        OpenStdin: false,
+        StdinOnce: false,
+        Env: ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
+        Cmd: ["/bin/sh", "-c", "#(nop) COPY file:1 in /"],
+        Image: "",
+        Volumes: null,
+        WorkingDir: "",
+        Entrypoint: null,
+        OnBuild: null,
+        Labels: {}
+      },
+      created: new Date().toISOString(),
+      docker_version: "20.10.0",
+      history: manifest.layers?.map(() => ({
+        created: new Date().toISOString(),
+        created_by: "/bin/sh -c #(nop) ADD file: in /"
+      })) || [],
+      os: "linux",
+      rootfs: {
+        type: "layers",
+        diff_ids: manifest.layers?.map(layer => layer.digest) || []
+      }
+    };
+    
+    tarBuilder.addFile(`${imageId}.json`, JSON.stringify(configJson));
+    
+    // 3. 添加各个层的数据
+    for (let i = 0; i < layers.length && i < (manifest.layers?.length || 0); i++) {
+      const layer = layers[i];
+      const layerInfo = manifest.layers![i];
+      const layerId = this.generateLayerId(layerInfo.digest);
+      
+      console.log(`处理层 ${i + 1}/${layers.length}: ${layerId}, 大小: ${layer.size} bytes`);
+      
+      // 将层数据转换为 Uint8Array
+      const layerBuffer = await layer.arrayBuffer();
+      const layerData = new Uint8Array(layerBuffer);
+      
+      // 添加层目录和文件
+      tarBuilder.addDirectory(`${layerId}/`);
+      tarBuilder.addFile(`${layerId}/VERSION`, '1.0');
+      tarBuilder.addFile(`${layerId}/json`, JSON.stringify({
+        id: layerId,
+        parent: i > 0 ? this.generateLayerId(manifest.layers![i-1].digest) : undefined,
+        created: new Date().toISOString(),
+        container_config: {
+          Cmd: ["/bin/sh", "-c", "#(nop) ADD file: in /"]
+        }
+      }));
+      
+      // 添加层的 tar 数据
+      tarBuilder.addFile(`${layerId}/layer.tar`, layerData);
+      console.log(`层 ${layerId} 添加完成`);
+    }
+  }
+
+  private generateImageId(imageTag: string): string {
+    // 生成一个简化的镜像 ID (在实际应用中应该使用更复杂的哈希算法)
+    let hash = 0;
+    for (let i = 0; i < imageTag.length; i++) {
+      const char = imageTag.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // 转换为32位整数
+    }
+    return Math.abs(hash).toString(16).padStart(12, '0');
+  }
+
+  private generateLayerId(digest: string): string {
+    // 从 digest 中提取或生成层 ID
+    return digest.replace('sha256:', '').substring(0, 12);
   }
 
   getDownloadFilename(imageInfo: DockerImageInfo): string {
