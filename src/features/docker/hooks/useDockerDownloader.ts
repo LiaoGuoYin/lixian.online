@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { dockerService } from "../api/DockerService";
 import { DockerImageInfo, DockerDownloadProgress } from "../types";
+import { get } from "@/shared/lib/http";
 
 export function useDockerDownloader() {
   const [imageUrl, setImageUrl] = useState("");
@@ -126,9 +127,52 @@ export function useDockerDownloader() {
         totalSize
       } : null);
 
-      // 这里应该实现实际的下载和打包逻辑
-      // 由于浏览器环境限制，暂时生成一个下载链接
-      const blob = dockerService.generateDockerLoadTar(manifest, [], imageInfo);
+      // 实际下载层数据
+      const downloadedLayers: Blob[] = [];
+      let downloadedSize = 0;
+      
+      // 获取认证令牌用于下载层
+      const namespace = imageInfo.namespace || 'library';
+      const authUrl = `/api/docker/auth?namespace=${namespace}&repository=${imageInfo.repository}`;
+      const authResponse = await get(authUrl, {});
+      const token = authResponse.data.token;
+
+      for (let i = 0; i < layers.length; i++) {
+        const layer = layers[i];
+        if (!layer?.digest) continue;
+        
+        setDownloadProgress(prev => prev ? {
+          ...prev,
+          layerIndex: i + 1, // 转换为基于1的索引
+          currentLayerSize: layer.size || 0,
+          downloadedSize
+        } : null);
+
+        try {
+          console.log(`开始下载层 ${i + 1}/${layers.length}: ${layer.digest}`);
+          const layerBlob = await dockerService.downloadLayer(imageInfo, layer.digest, token);
+          console.log(`层 ${i + 1} 下载完成，大小: ${layerBlob.size} bytes`);
+          
+          downloadedLayers.push(layerBlob);
+          downloadedSize += layerBlob.size;
+          
+          setDownloadProgress(prev => prev ? {
+            ...prev,
+            layerIndex: i + 1, // 确保显示当前完成的层数
+            downloadedSize
+          } : null);
+        } catch (error) {
+          console.error(`下载层 ${layer.digest} 失败:`, error);
+          // 不要静默忽略错误，抛出错误让用户知道
+          throw new Error(`下载层失败: ${error}`);
+        }
+      }
+
+      console.log('开始生成 TAR 文件，下载的层数:', downloadedLayers.length);
+      console.log('层大小信息:', downloadedLayers.map((layer, i) => ({ index: i, size: layer.size })));
+      
+      // 生成 Docker Load TAR 文件
+      const blob = await dockerService.generateDockerLoadTar(manifest, downloadedLayers, imageInfo);
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
 

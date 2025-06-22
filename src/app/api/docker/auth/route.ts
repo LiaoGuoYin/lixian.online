@@ -14,9 +14,14 @@ export async function GET(request: NextRequest) {
     }
 
     // 构建 Docker 认证 URL
-    const authUrl = `https://auth.docker.io/token?service=registry.docker.io&scope=repository:${namespace}/${repository}:pull`;
+    // Docker Hub 认证始终需要完整路径包括 namespace
+    const repoPath = `${namespace}/${repository}`;
+    const authUrl = `https://auth.docker.io/token?service=registry.docker.io&scope=repository:${repoPath}:pull`;
+    
+    console.log('Docker 认证请求:', { namespace, repository, repoPath, authUrl });
 
     // 代理请求到 Docker 认证服务
+    console.log('发送认证请求到:', authUrl);
     const response = await fetch(authUrl, {
       method: 'GET',
       headers: {
@@ -24,15 +29,20 @@ export async function GET(request: NextRequest) {
         'Accept': 'application/json',
       },
     });
+    
+    console.log('认证响应状态:', response.status, response.statusText);
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Docker 认证失败:', response.status, errorText);
       return NextResponse.json(
-        { error: `Docker 认证服务响应错误: ${response.status}` },
+        { error: `Docker 认证服务响应错误: ${response.status} - ${errorText}` },
         { status: response.status }
       );
     }
 
     const data = await response.json();
+    console.log('认证成功:', { hasToken: !!data.token, tokenLength: data.token?.length });
 
     return NextResponse.json(data, {
       status: 200,
