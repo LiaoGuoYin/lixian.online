@@ -10,7 +10,7 @@ import {
 import { useToast } from "@/hooks/useToast";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
-import { Download, Container } from "lucide-react";
+import { Download, Container, Info, Archive } from "lucide-react";
 import { useDockerDownloader } from "../hooks/useDockerDownloader";
 
 export default function DockerDownloader() {
@@ -67,7 +67,7 @@ export default function DockerDownloader() {
     const success = await handlePasteFromClipboard();
     if (success) {
       toast({
-        title: "解析成功", 
+        title: "解析成功",
         description: "已自动粘贴并解析镜像信息，选中可用标签",
       });
     } else {
@@ -79,62 +79,56 @@ export default function DockerDownloader() {
     }
   };
 
+  const progressPercent = downloadProgress && downloadProgress.totalLayers > 0
+    ? (downloadProgress.layerIndex / downloadProgress.totalLayers) * 100
+    : 0;
+
   return (
-    <form onSubmit={onSubmit} className="space-y-8">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-            Docker 镜像名称或 URL
-          </label>
-          <Input
-            placeholder="请输入 Docker 镜像名称，如：nginx:latest 或 hub.docker.com/r/library/nginx"
-            value={imageUrl}
-            onChange={onImageUrlChange}
-            onDoubleClick={handleInputDoubleClick}
-            className="w-full transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            支持格式：nginx:latest, library/nginx:latest, hub.docker.com/r/library/nginx
-          </div>
-        </div>
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
-        >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <LoadingSpinner />
-              解析中...
-            </span>
-          ) : (
-            <span className="flex items-center justify-center gap-2">
-              <Container className="h-4 w-4" />
-              解析镜像信息
-            </span>
-          )}
-        </Button>
+    <form onSubmit={onSubmit} className="space-y-6">
+      <div className="space-y-3">
+        <label className="text-sm font-medium text-foreground">
+          Docker 镜像名称或 URL
+        </label>
+        <Input
+          placeholder="nginx:latest 或 hub.docker.com/r/library/nginx"
+          value={imageUrl}
+          onChange={onImageUrlChange}
+          onDoubleClick={handleInputDoubleClick}
+        />
+        <p className="text-xs text-muted-foreground">
+          支持 nginx:latest、library/nginx:latest、Docker Hub URL · <span className="text-primary">双击输入框可自动粘贴</span>
+        </p>
       </div>
 
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? (
+          <span className="flex items-center justify-center gap-2">
+            <LoadingSpinner />
+            解析中...
+          </span>
+        ) : (
+          <span className="flex items-center justify-center gap-2">
+            <Container className="h-4 w-4" />
+            解析镜像信息
+          </span>
+        )}
+      </Button>
+
       {tagList.length > 0 && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-foreground">
             选择标签
           </label>
           <Select
             value={imageInfo?.tag || ""}
             onValueChange={onTagChange}
           >
-            <SelectTrigger className="w-full border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="选择标签" />
             </SelectTrigger>
             <SelectContent>
               {tagList.map((tag) => (
-                <SelectItem
-                  key={tag}
-                  value={tag}
-                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
+                <SelectItem key={tag} value={tag}>
                   {tag}
                 </SelectItem>
               ))}
@@ -145,13 +139,19 @@ export default function DockerDownloader() {
 
       {imageInfo?.tag && (
         <div className="space-y-4">
-          <Card className="border border-green-100 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
-            <CardContent className="p-4">
-              <div className="text-sm space-y-1">
-                <div><span className="font-medium">镜像仓库:</span> {imageInfo.registry}</div>
-                <div><span className="font-medium">命名空间:</span> {imageInfo.namespace || 'library'}</div>
-                <div><span className="font-medium">仓库名称:</span> {imageInfo.repository}</div>
-                <div><span className="font-medium">标签:</span> {imageInfo.tag}</div>
+          {/* Image Info */}
+          <Card className="border border-border/60 bg-secondary/30">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center mt-0.5">
+                  <Info className="h-4 w-4 text-primary" />
+                </div>
+                <div className="text-sm space-y-1 min-w-0">
+                  <p className="font-medium text-foreground">{imageInfo.repository}</p>
+                  <p className="text-muted-foreground">仓库: {imageInfo.registry}</p>
+                  <p className="text-muted-foreground">命名空间: {imageInfo.namespace || 'library'}</p>
+                  <p className="text-muted-foreground">标签: {imageInfo.tag}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -160,7 +160,7 @@ export default function DockerDownloader() {
             type="button"
             onClick={onDownload}
             disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 transition-colors duration-200"
+            className="w-full"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -178,25 +178,23 @@ export default function DockerDownloader() {
       )}
 
       {downloadProgress && (
-        <Card className="border border-blue-100 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-          <CardContent className="p-4">
-            <div className="space-y-2">
+        <Card className="border border-border/60 bg-secondary/30">
+          <CardContent className="p-5">
+            <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span>下载进度</span>
-                <span>{downloadProgress.layerIndex}/{downloadProgress.totalLayers} 层</span>
+                <span className="text-foreground font-medium">
+                  {downloadProgress.status === 'downloading' ? '下载中...' :
+                   downloadProgress.status === 'completed' ? '下载完成' : '下载出错'}
+                </span>
+                <span className="text-muted-foreground tabular-nums">
+                  {downloadProgress.layerIndex}/{downloadProgress.totalLayers} 层
+                </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
                 <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{
-                    width: `${downloadProgress.totalLayers > 0 ? 
-                      (downloadProgress.layerIndex / downloadProgress.totalLayers) * 100 : 0}%`
-                  }}
-                ></div>
-              </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">
-                状态: {downloadProgress.status === 'downloading' ? '下载中' : 
-                       downloadProgress.status === 'completed' ? '完成' : '错误'}
+                  className="bg-primary h-full rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                />
               </div>
             </div>
           </CardContent>
@@ -204,21 +202,31 @@ export default function DockerDownloader() {
       )}
 
       {downloadUrl && (
-        <Card className="border border-green-100 bg-green-50 dark:bg-green-900/20 dark:border-green-800 transition-all duration-200 hover:shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Download className="h-5 w-5 text-green-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                下载链接
-              </span>
+        <Card className="border border-primary/20 bg-primary/5">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center">
+                  <Archive className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {imageInfo?.repository}-{imageInfo?.tag}.tar
+                  </p>
+                  <p className="text-xs text-muted-foreground">docker load 导入</p>
+                </div>
+              </div>
+              <a
+                href={downloadUrl}
+                download={imageInfo ? `${imageInfo.repository}-${imageInfo.tag}.tar` : 'docker-image.tar'}
+                className="flex-shrink-0"
+              >
+                <Button type="button" size="sm" variant="outline" className="gap-1.5">
+                  <Download className="h-3.5 w-3.5" />
+                  下载
+                </Button>
+              </a>
             </div>
-            <a
-              href={downloadUrl}
-              download={imageInfo ? `${imageInfo.repository}-${imageInfo.tag}.tar` : 'docker-image.tar'}
-              className="block text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 hover:underline break-all transition-colors duration-200"
-            >
-              {imageInfo?.repository}-{imageInfo?.tag}.tar
-            </a>
           </CardContent>
         </Card>
       )}
