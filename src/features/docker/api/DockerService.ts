@@ -169,111 +169,118 @@ class DockerService {
   }
 
   private async buildDockerLoadTar(
-    tarBuilder: TarBuilder, 
-    manifest: DockerManifest, 
-    layers: Blob[], 
+    tarBuilder: TarBuilder,
+    manifest: DockerManifest,
+    layers: Blob[],
     imageInfo: DockerImageInfo
   ): Promise<void> {
     const namespace = imageInfo.namespace || 'library';
     const fullImageName = namespace ? `${namespace}/${imageInfo.repository}` : imageInfo.repository;
     const imageTag = `${fullImageName}:${imageInfo.tag}`;
-    
-    // 生成唯一的 image ID (使用简化的哈希)
     const imageId = this.generateImageId(imageTag);
-    
-    // 1. 添加 manifest.json (Docker Load 格式要求)
-    const manifestJson = [{
+    const manifestLayers = manifest.layers ?? [];
+
+    // Step 1: decompress each layer and compute its uncompressed SHA256.
+    // docker load verifies diff_ids against the SHA256 of the *decompressed* layer tar,
+    // and layer.tar inside the archive must also be the uncompressed content.
+    type ProcessedLayer = { data: Uint8Array; diffId: string; layerId: string };
+    const processed: ProcessedLayer[] = [];
+
+    for (let i = 0; i < layers.length && i < manifestLayers.length; i++) {
+      const layerInfo = manifestLayers[i];
+      const layerId = this.generateLayerId(layerInfo.digest);
+      console.log(`解压层 ${i + 1}/${layers.length}: ${layerId}`);
+      const { data, sha256 } = await this.decompressAndHash(layers[i]);
+      processed.push({ data, diffId: sha256, layerId });
+    }
+
+    // Step 2: manifest.json
+    tarBuilder.addFile('manifest.json', JSON.stringify([{
       Config: `${imageId}.json`,
       RepoTags: [imageTag],
-      Layers: manifest.layers?.map((_, index) => `${this.generateLayerId(manifest.layers![index].digest)}/layer.tar`) || []
-    }];
-    
-    tarBuilder.addFile('manifest.json', JSON.stringify(manifestJson));
-    
-    // 2. 添加 config.json (镜像配置)
+      Layers: processed.map(l => `${l.layerId}/layer.tar`),
+    }]));
+
+    // Step 3: config JSON — diff_ids must be uncompressed SHA256 values
     const configJson = {
       architecture: "amd64",
       config: {
-        Hostname: "",
-        Domainname: "",
-        User: "",
-        AttachStdin: false,
-        AttachStdout: false,
-        AttachStderr: false,
-        Tty: false,
-        OpenStdin: false,
-        StdinOnce: false,
+        Hostname: "", Domainname: "", User: "",
+        AttachStdin: false, AttachStdout: false, AttachStderr: false,
+        Tty: false, OpenStdin: false, StdinOnce: false,
         Env: ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
-        Cmd: null,
-        Image: "",
-        Volumes: null,
-        WorkingDir: "",
-        Entrypoint: null,
-        OnBuild: null,
-        Labels: null
+        Cmd: null, Image: "", Volumes: null, WorkingDir: "",
+        Entrypoint: null, OnBuild: null, Labels: null,
       },
       container_config: {
-        Hostname: "",
-        Domainname: "",
-        User: "",
-        AttachStdin: false,
-        AttachStdout: false,
-        AttachStderr: false,
-        Tty: false,
-        OpenStdin: false,
-        StdinOnce: false,
+        Hostname: "", Domainname: "", User: "",
+        AttachStdin: false, AttachStdout: false, AttachStderr: false,
+        Tty: false, OpenStdin: false, StdinOnce: false,
         Env: ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
-        Cmd: ["/bin/sh", "-c", "#(nop) COPY file:1 in /"],
-        Image: "",
-        Volumes: null,
-        WorkingDir: "",
-        Entrypoint: null,
-        OnBuild: null,
-        Labels: {}
+        Cmd: ["/bin/sh", "-c", "#(nop) ADD file: in /"],
+        Image: "", Volumes: null, WorkingDir: "",
+        Entrypoint: null, OnBuild: null, Labels: {},
       },
       created: new Date().toISOString(),
       docker_version: "20.10.0",
-      history: manifest.layers?.map(() => ({
+      history: manifestLayers.map(() => ({
         created: new Date().toISOString(),
-        created_by: "/bin/sh -c #(nop) ADD file: in /"
-      })) || [],
+        created_by: "/bin/sh -c #(nop) ADD file: in /",
+      })),
       os: "linux",
       rootfs: {
         type: "layers",
-        diff_ids: manifest.layers?.map(layer => layer.digest) || []
-      }
+        diff_ids: processed.map(l => l.diffId),
+      },
     };
-    
     tarBuilder.addFile(`${imageId}.json`, JSON.stringify(configJson));
-    
-    // 3. 添加各个层的数据
-    for (let i = 0; i < layers.length && i < (manifest.layers?.length || 0); i++) {
-      const layer = layers[i];
-      const layerInfo = manifest.layers![i];
-      const layerId = this.generateLayerId(layerInfo.digest);
-      
-      console.log(`处理层 ${i + 1}/${layers.length}: ${layerId}, 大小: ${layer.size} bytes`);
-      
-      // 将层数据转换为 Uint8Array
-      const layerBuffer = await layer.arrayBuffer();
-      const layerData = new Uint8Array(layerBuffer);
-      
-      // 添加层目录和文件
+
+    // Step 4: layer files with decompressed data
+    for (let i = 0; i < processed.length; i++) {
+      const { data, layerId } = processed[i];
       tarBuilder.addDirectory(`${layerId}/`);
       tarBuilder.addFile(`${layerId}/VERSION`, '1.0');
       tarBuilder.addFile(`${layerId}/json`, JSON.stringify({
         id: layerId,
-        parent: i > 0 ? this.generateLayerId(manifest.layers![i-1].digest) : undefined,
+        parent: i > 0 ? processed[i - 1].layerId : undefined,
         created: new Date().toISOString(),
-        container_config: {
-          Cmd: ["/bin/sh", "-c", "#(nop) ADD file: in /"]
-        }
+        container_config: { Cmd: ["/bin/sh", "-c", "#(nop) ADD file: in /"] },
       }));
-      
-      // 添加层的 tar 数据
-      tarBuilder.addFile(`${layerId}/layer.tar`, layerData);
-      console.log(`层 ${layerId} 添加完成`);
+      tarBuilder.addFile(`${layerId}/layer.tar`, data);
+      console.log(`层 ${layerId} 添加完成，解压大小: ${data.length} bytes`);
     }
+  }
+
+  // Decompress a gzip blob and return decompressed bytes + its SHA256
+  private async decompressAndHash(blob: Blob): Promise<{ data: Uint8Array; sha256: string }> {
+    const ds = new DecompressionStream('gzip');
+    const writer = ds.writable.getWriter();
+    const reader = ds.readable.getReader();
+
+    writer.write(new Uint8Array(await blob.arrayBuffer()));
+    writer.close();
+
+    const chunks: Uint8Array[] = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+
+    const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+
+    const hashBuf = await crypto.subtle.digest('SHA-256', result);
+    const sha256 = 'sha256:' + Array.from(new Uint8Array(hashBuf))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    return { data: result, sha256 };
   }
 
   private generateImageId(imageTag: string): string {
