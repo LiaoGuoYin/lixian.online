@@ -1,26 +1,26 @@
 import axios from "axios";
 
-const headers = {
+const baseHeaders = {
   "Content-Type": "application/json",
-  Accept: "application/json;api-version=3.0-preview.1",
+  Accept: "application/json",
 };
 
 // GET
 export const get = (url: string, params: any) => {
-  return axios.get(url, { headers, params });
+  return axios.get(url, { headers: baseHeaders, params });
 };
 
-// POST
-export const post = (url: string, payload?: any) => {
-  return axios.post(url, payload, { headers });
+// POST — caller can pass extra headers (e.g. VSCode marketplace requires api-version)
+export const post = (url: string, payload?: any, extraHeaders?: Record<string, string>) => {
+  return axios.post(url, payload, { headers: { ...baseHeaders, ...extraHeaders } });
 };
 
 // PUT
 export const put = (url: string, data: any) => {
-  return axios.put(url, data, { headers });
+  return axios.put(url, data, { headers: baseHeaders });
 };
 
 // DELETE
 export const del = (url: string) => {
-  return axios.delete(url, { headers });
+  return axios.delete(url, { headers: baseHeaders });
 };

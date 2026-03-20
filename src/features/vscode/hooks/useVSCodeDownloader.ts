@@ -14,10 +14,13 @@ export function useVSCodeDownloader() {
   const onUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newUrl = e.target.value;
     setUrl(newUrl);
-    setExtensionInfo({
-      ...vscodeService.extractExtensionInfo(newUrl),
-      version: null,
-    });
+    // extractExtensionInfo may throw for complete but invalid URLs; swallow here,
+    // validation happens on submit
+    try {
+      setExtensionInfo({ ...vscodeService.extractExtensionInfo(newUrl), version: null });
+    } catch {
+      setExtensionInfo(null);
+    }
   }, []);
 
   const handlePasteFromClipboard = useCallback(async () => {
@@ -87,10 +90,12 @@ export function useVSCodeDownloader() {
           throw new Error("请输入插件 URL");
         }
 
-        if (extensionInfo) {
-          const versions = await vscodeService.getVersionList(extensionInfo);
-          setVersionList(versions);
+        if (!extensionInfo?.publisher || !extensionInfo?.extension) {
+          throw new Error("请输入有效的 VSCode 插件 URL");
         }
+
+        const versions = await vscodeService.getVersionList(extensionInfo);
+        setVersionList(versions);
       } catch (error) {
         throw error;
       } finally {

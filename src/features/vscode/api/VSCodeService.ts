@@ -1,20 +1,41 @@
-import { ExtensionInfo, VersionInfo } from "@/features/vscode/types";
+import { ExtensionInfo } from "@/features/vscode/types";
 import { post } from "@/shared/lib/http";
+
+// VSCode marketplace requires this specific Accept header
+const VSCODE_API_HEADERS = {
+  Accept: "application/json;api-version=3.0-preview.1",
+};
 
 class VSCodeService {
   extractExtensionInfo(url: string): ExtensionInfo {
-    if (!url) {
+    if (!url) return { publisher: "", extension: "", version: null };
+
+    let urlObj: URL;
+    try {
+      urlObj = new URL(url);
+    } catch {
+      // Not a valid URL yet (user still typing) — return empty
       return { publisher: "", extension: "", version: null };
     }
-    const urlObj = new URL(url);
+
     const itemName = urlObj.searchParams.get("itemName");
     if (!itemName) {
       throw new Error(
-        "无效的插件 URL, Example: https://marketplace.visualstudio.com/items?itemName=ms-python.python"
+        "无效的插件 URL，示例：https://marketplace.visualstudio.com/items?itemName=ms-python.python"
       );
     }
-    const [pub, ext] = itemName.split(".");
-    return { publisher: pub, extension: ext, version: null };
+
+    // Use lastIndexOf so publishers/extensions containing dots are handled correctly
+    const dotIndex = itemName.lastIndexOf(".");
+    if (dotIndex === -1) {
+      throw new Error("无效的插件 ID 格式，应为 publisher.extension");
+    }
+
+    return {
+      publisher: itemName.substring(0, dotIndex),
+      extension: itemName.substring(dotIndex + 1),
+      version: null,
+    };
   }
 
   async getVersionList(extensionInfo: ExtensionInfo): Promise<string[]> {
@@ -37,32 +58,22 @@ class VSCodeService {
       flags: 402,
     };
 
-    const response = await post(url, payload);
+    const response = await post(url, payload, VSCODE_API_HEADERS);
 
-    const {
-      publisher: publisherDict,
-      lastUpdated,
-      shortDescription,
-      versions: versionList,
-    } = response.data.results[0].extensions[0];
+    const extensions = response.data?.results?.[0]?.extensions;
+    if (!extensions?.length) {
+      throw new Error("未找到该插件，请检查 URL 是否正确");
+    }
 
-    const versionNumbers = versionList.map((v: any) => v.version);
-    // return {
-    //   lastUpdated,
-    //   shortDescription,
-    //   versionList: versionNumbers,
-    // } as VersionInfo;
-    return versionNumbers;
+    const versionList: { version: string }[] = extensions[0].versions ?? [];
+    return versionList.map((v) => v.version).filter(Boolean);
   }
 
   async getDownloadUrl(extensionInfo: ExtensionInfo): Promise<string> {
     if (!extensionInfo.version) {
       throw new Error("Version is not set");
     }
-    const url = `https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${extensionInfo.publisher}/vsextensions/${extensionInfo.extension}/${extensionInfo.version}/vspackage`;
-    // const { response } = (await get(url, {})).data;
-    // return response.data;
-    return url;
+    return `https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${extensionInfo.publisher}/vsextensions/${extensionInfo.extension}/${extensionInfo.version}/vspackage`;
   }
 }
 

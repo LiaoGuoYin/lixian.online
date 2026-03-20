@@ -37,20 +37,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 获取响应数据并直接传输
-    const arrayBuffer = await response.arrayBuffer();
-    
-    console.log('层下载成功:', {
-      digest: digest.substring(0, 20) + '...',
-      size: arrayBuffer.byteLength,
-      contentType: response.headers.get('Content-Type')
-    });
-    
-    return new NextResponse(arrayBuffer, {
+    if (!response.body) {
+      return NextResponse.json(
+        { error: "Docker Registry returned empty response" },
+        { status: 502 }
+      );
+    }
+
+    // Stream the layer directly to the client — avoids buffering large layers in Node.js memory
+    return new NextResponse(response.body, {
       status: 200,
       headers: {
         'Content-Type': response.headers.get('Content-Type') || 'application/octet-stream',
-        'Content-Length': response.headers.get('Content-Length') || arrayBuffer.byteLength.toString(),
+        'Content-Length': response.headers.get('Content-Length') || '',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
