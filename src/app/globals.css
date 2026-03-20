@@ -1,6 +1,108 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  /* Colors — mapped from CSS variables for light/dark mode */
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+  --color-card: rgb(var(--card));
+  --color-card-foreground: rgb(var(--card-foreground));
+  --color-popover: rgb(var(--popover));
+  --color-popover-foreground: rgb(var(--popover-foreground));
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+  --color-destructive: rgb(var(--destructive));
+  --color-destructive-foreground: rgb(var(--destructive-foreground));
+  --color-border: rgb(var(--border));
+  --color-input: rgb(var(--input));
+  --color-ring: rgb(var(--ring));
+  --color-chart-1: rgb(var(--chart-1));
+  --color-chart-2: rgb(var(--chart-2));
+  --color-chart-3: rgb(var(--chart-3));
+  --color-chart-4: rgb(var(--chart-4));
+  --color-chart-5: rgb(var(--chart-5));
+  --color-apple-gray-1: rgb(var(--apple-gray-1));
+  --color-apple-gray-2: rgb(var(--apple-gray-2));
+  --color-apple-gray-3: rgb(var(--apple-gray-3));
+  --color-apple-gray-4: rgb(var(--apple-gray-4));
+  --color-apple-gray-5: rgb(var(--apple-gray-5));
+  --color-apple-gray-6: rgb(var(--apple-gray-6));
+}
+
+@theme {
+  /* Border radius */
+  --radius-apple: 12px;
+  --radius-apple-sm: 8px;
+  --radius-apple-lg: 16px;
+  --radius-apple-xl: 20px;
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Font family */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+
+  /* Font size */
+  --text-display: clamp(3rem, 8vw, 6rem);
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.025em;
+  --text-headline: clamp(2rem, 5vw, 3rem);
+  --text-headline--line-height: 1.2;
+  --text-headline--letter-spacing: -0.015em;
+  --text-title: 1.5rem;
+  --text-title--line-height: 1.3;
+  --text-title--letter-spacing: -0.01em;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-caption: 0.875rem;
+  --text-caption--line-height: 1.4;
+
+  /* Spacing */
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+  --spacing-128: 32rem;
+
+  /* Max width */
+  --container-8xl: 88rem;
+  --container-9xl: 96rem;
+
+  /* Backdrop blur */
+  --blur-xs: 2px;
+
+  /* Box shadows */
+  --shadow-apple: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 6px rgba(0, 0, 0, 0.04);
+  --shadow-apple-lg: 0 12px 48px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+  --shadow-apple-button: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-apple-button-pressed: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+
+  /* Animations */
+  --animate-fade-in: fadeIn 0.5s ease-in-out;
+  --animate-slide-up: slideUp 0.3s ease-out;
+  --animate-bounce-subtle: bounceSubtle 0.6s ease-in-out;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bounceSubtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
 
 @layer base {
   :root {
@@ -30,7 +132,7 @@
     --chart-4: 88 86 214;
     --chart-5: 255 45 85;
     --radius: 12px;
-    
+
     /* Apple-specific design tokens */
     --apple-gray-1: 142 142 147;
     --apple-gray-2: 174 174 178;
@@ -39,7 +141,7 @@
     --apple-gray-5: 229 229 234;
     --apple-gray-6: 242 242 247;
   }
-  
+
   .dark {
     --background: 0 0 0;
     --foreground: 255 255 255;
@@ -65,7 +167,7 @@
     --chart-3: 255 69 58;
     --chart-4: 94 92 230;
     --chart-5: 255 55 95;
-    
+
     --apple-gray-1: 142 142 147;
     --apple-gray-2: 99 99 102;
     --apple-gray-3: 72 72 74;
@@ -79,21 +181,21 @@
   * {
     @apply border-border;
   }
-  
+
   html {
     scroll-behavior: smooth;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     min-height: 100vh;
     background: rgb(var(--background));
   }
-  
+
   /* Apple-style typography scale */
   .text-display {
     font-size: clamp(3rem, 8vw, 6rem);
@@ -101,34 +203,34 @@
     line-height: 1.1;
     letter-spacing: -0.025em;
   }
-  
+
   .text-headline {
     font-size: clamp(2rem, 5vw, 3rem);
     font-weight: 600;
     line-height: 1.2;
     letter-spacing: -0.015em;
   }
-  
+
   .text-title {
     font-size: 1.5rem;
     font-weight: 600;
     line-height: 1.3;
     letter-spacing: -0.01em;
   }
-  
+
   .text-body {
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.5;
   }
-  
+
   .text-caption {
     font-size: 0.875rem;
     font-weight: 400;
     line-height: 1.4;
     color: rgb(var(--muted-foreground));
   }
-  
+
   /* Apple-style glass morphism effect */
   .glass {
     background: rgba(255, 255, 255, 0.8);
@@ -136,28 +238,28 @@
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.18);
   }
-  
+
   .glass-dark {
     background: rgba(28, 28, 30, 0.8);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
-  
+
   /* Apple-style shadows */
   .shadow-apple {
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 6px rgba(0, 0, 0, 0.04);
   }
-  
+
   .shadow-apple-lg {
     box-shadow: 0 12px 48px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
   }
-  
+
   /* Smooth transitions for all interactive elements */
   button, a, [role="button"] {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   /* Improved focus states */
   *:focus-visible {
     outline: 2px solid rgb(var(--ring));
