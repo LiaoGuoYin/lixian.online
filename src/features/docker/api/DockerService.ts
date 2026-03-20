@@ -164,8 +164,8 @@ class DockerService {
     
     const tarData = tarBuilder.build();
     console.log('TAR 文件大小:', tarData.length, 'bytes');
-    
-    return new Blob([tarData], { type: 'application/x-tar' });
+
+    return new Blob([tarData.buffer as ArrayBuffer], { type: 'application/x-tar' });
   }
 
   private async buildDockerLoadTar(

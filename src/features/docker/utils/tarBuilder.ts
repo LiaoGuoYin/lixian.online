@@ -4,53 +4,53 @@ export class TarBuilder {
   private totalSize = 0;
 
   // TAR 头部格式
-  private createHeader(name: string, size: number, mode = '0000644', uid = '0000000', gid = '0000000'): Uint8Array {
+  private createHeader(name: string, size: number, mode = '0000644', uid = '0000000', gid = '0000000', type = '0'): Uint8Array {
     const header = new Uint8Array(512);
     const encoder = new TextEncoder();
-    
+
     // 文件名 (100 bytes)
     const nameBytes = encoder.encode(name);
     header.set(nameBytes.slice(0, 100), 0);
-    
+
     // 文件模式 (8 bytes)
     const modeBytes = encoder.encode(mode.padStart(7, '0') + '\0');
     header.set(modeBytes, 100);
-    
+
     // 用户 ID (8 bytes)
     const uidBytes = encoder.encode(uid.padStart(7, '0') + '\0');
     header.set(uidBytes, 108);
-    
+
     // 组 ID (8 bytes)
     const gidBytes = encoder.encode(gid.padStart(7, '0') + '\0');
     header.set(gidBytes, 116);
-    
+
     // 文件大小 (12 bytes)
     const sizeStr = size.toString(8).padStart(11, '0') + '\0';
     const sizeBytes = encoder.encode(sizeStr);
     header.set(sizeBytes, 124);
-    
+
     // 修改时间 (12 bytes) - 当前时间
     const mtime = Math.floor(Date.now() / 1000).toString(8).padStart(11, '0') + '\0';
     const mtimeBytes = encoder.encode(mtime);
     header.set(mtimeBytes, 136);
-    
-    // 校验和占位符 (8 bytes)
+
+    // 校验和字段先填 8 个空格（TAR spec 要求计算时此字段视为空格）
     header.set(encoder.encode('        '), 148);
-    
-    // 文件类型 (1 byte) - 普通文件
-    header.set(encoder.encode('0'), 156);
-    
-    // 计算校验和
+
+    // 文件类型 (1 byte) — 必须在计算 checksum 之前设置
+    header.set(encoder.encode(type), 156);
+
+    // 计算校验和（此时 header 已包含正确的 typeflag）
     let checksum = 0;
     for (let i = 0; i < 512; i++) {
       checksum += header[i];
     }
-    
+
     // 写入校验和
     const checksumStr = checksum.toString(8).padStart(6, '0') + '\0 ';
     const checksumBytes = encoder.encode(checksumStr);
     header.set(checksumBytes, 148);
-    
+
     return header;
   }
 
@@ -81,9 +81,8 @@ export class TarBuilder {
   // 添加空目录
   addDirectory(name: string): void {
     const dirName = name.endsWith('/') ? name : name + '/';
-    const header = this.createHeader(dirName, 0, '0000755');
-    // 设置目录标志
-    header[156] = 53; // '5' 表示目录
+    // 传入 type='5'，checksum 在 createHeader 内部正确计算
+    const header = this.createHeader(dirName, 0, '0000755', '0000000', '0000000', '5');
     this.data.push(header);
     this.totalSize += 512;
   }

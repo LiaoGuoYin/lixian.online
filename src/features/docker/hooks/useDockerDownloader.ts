@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { dockerService } from "../api/DockerService";
 import { DockerImageInfo, DockerDownloadProgress } from "../types";
 import { get } from "@/shared/lib/http";
@@ -10,6 +10,15 @@ export function useDockerDownloader() {
   const [downloadProgress, setDownloadProgress] = useState<DockerDownloadProgress | null>(null);
   const [loading, setLoading] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState("");
+
+  // Track current blob URL so we can revoke it on re-download or unmount
+  const blobUrlRef = useRef<string>("");
+
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    };
+  }, []);
 
   const onImageUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newUrl = e.target.value;
@@ -173,7 +182,11 @@ export function useDockerDownloader() {
       
       // 生成 Docker Load TAR 文件
       const blob = await dockerService.generateDockerLoadTar(manifest, downloadedLayers, imageInfo);
+
+      // Revoke previous blob URL before creating a new one
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
       const url = URL.createObjectURL(blob);
+      blobUrlRef.current = url;
       setDownloadUrl(url);
 
       setDownloadProgress(prev => prev ? {

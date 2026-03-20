@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { chromeService } from "../api/ChromeService";
 import { ChromeExtensionInfo, ChromeDownloadProgress } from "../types";
 
@@ -8,6 +8,15 @@ export function useChromeDownloader() {
   const [downloadProgress, setDownloadProgress] = useState<ChromeDownloadProgress | null>(null);
   const [downloadUrls, setDownloadUrls] = useState<{crx?: string; zip?: string}>({});
   const [loading, setLoading] = useState(false);
+
+  // Track active blob URLs so they can be revoked on re-download or unmount
+  const blobUrlsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    return () => {
+      blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, []);
 
   const onUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newUrl = e.target.value;
@@ -127,8 +136,14 @@ export function useChromeDownloader() {
       }
 
       const crxBlob = await response.blob();
+
+      // Revoke previous blob URLs before creating new ones
+      blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+      blobUrlsRef.current = [];
+
       const crxUrl = URL.createObjectURL(crxBlob);
-      
+      blobUrlsRef.current.push(crxUrl);
+
       const urls: {crx?: string; zip?: string} = {};
       
       if (format === 'crx' || format === 'both') {
@@ -141,7 +156,9 @@ export function useChromeDownloader() {
         
         try {
           const zipBlob = await chromeService.convertCrxToZip(crxBlob);
-          urls.zip = URL.createObjectURL(zipBlob);
+          const zipUrl = URL.createObjectURL(zipBlob);
+          blobUrlsRef.current.push(zipUrl);
+          urls.zip = zipUrl;
           
           // 检查转换是否实际成功（文件大小变化等）
           if (zipBlob.size === crxBlob.size) {
