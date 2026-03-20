@@ -10,7 +10,7 @@ import {
 import { useToast } from "@/hooks/useToast";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
-import { Download, Link as LinkIcon } from "lucide-react";
+import { Download, Link as LinkIcon, Package, ChevronDown } from "lucide-react";
 import { useVSCodeDownloader } from "../hooks/useVSCodeDownloader";
 
 export default function VSCodeDownloader() {
@@ -61,58 +61,51 @@ export default function VSCodeDownloader() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-8">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-            插件 URL
-          </label>
-          <Input
-            placeholder="请输入 VSCode 插件 URL"
-            value={url}
-            onChange={onUrlChange}
-            onDoubleClick={handleInputDoubleClick}
-            className="w-full transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
-        >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <LoadingSpinner />
-              解析中...
-            </span>
-          ) : (
-            <span className="flex items-center justify-center gap-2">
-              <LinkIcon className="h-4 w-4" />
-              解析下载链接
-            </span>
-          )}
-        </Button>
+    <form onSubmit={onSubmit} className="space-y-6">
+      <div className="space-y-3">
+        <label className="text-sm font-medium text-foreground">
+          插件 URL
+        </label>
+        <Input
+          placeholder="https://marketplace.visualstudio.com/items?itemName=..."
+          value={url}
+          onChange={onUrlChange}
+          onDoubleClick={handleInputDoubleClick}
+        />
+        <p className="text-xs text-muted-foreground">
+          支持 Visual Studio Marketplace 插件页面链接 · <span className="text-primary">双击输入框可自动粘贴</span>
+        </p>
       </div>
 
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? (
+          <span className="flex items-center justify-center gap-2">
+            <LoadingSpinner />
+            解析中...
+          </span>
+        ) : (
+          <span className="flex items-center justify-center gap-2">
+            <LinkIcon className="h-4 w-4" />
+            解析下载链接
+          </span>
+        )}
+      </Button>
+
       {versionList.length > 0 && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-foreground">
             选择版本
           </label>
           <Select
             value={extensionInfo?.version || ""}
             onValueChange={onVersionChange}
           >
-            <SelectTrigger className="w-full border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="选择版本" />
             </SelectTrigger>
             <SelectContent>
               {versionList.map((version) => (
-                <SelectItem
-                  key={version}
-                  value={version}
-                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
+                <SelectItem key={version} value={version}>
                   {version}
                 </SelectItem>
               ))}
@@ -121,23 +114,33 @@ export default function VSCodeDownloader() {
         </div>
       )}
 
-      {extensionInfo?.version && (
-        <Card className="border border-blue-100 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 transition-all duration-200 hover:shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Download className="h-5 w-5 text-blue-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                下载链接
-              </span>
+      {extensionInfo?.version && downloadUrl && (
+        <Card className="border border-primary/20 bg-primary/5">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center">
+                  <Package className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    版本 {extensionInfo.version}
+                  </p>
+                  <p className="text-xs text-muted-foreground">.vsix 离线安装包</p>
+                </div>
+              </div>
+              <a
+                href={downloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0"
+              >
+                <Button type="button" size="sm" variant="outline" className="gap-1.5">
+                  <Download className="h-3.5 w-3.5" />
+                  下载
+                </Button>
+              </a>
             </div>
-            <a
-              href={downloadUrl}
-              className="block text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline break-all transition-colors duration-200"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              版本: {extensionInfo.version}
-            </a>
           </CardContent>
         </Card>
       )}

@@ -3,7 +3,7 @@ import { Button } from "@/shared/ui/button";
 import { useToast } from "@/hooks/useToast";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
-import { Download, Globe, FileArchive } from "lucide-react";
+import { Download, Globe, FileArchive, Package, Info } from "lucide-react";
 import { useChromeDownloader } from "../hooks/useChromeDownloader";
 
 export default function ChromeDownloader() {
@@ -40,7 +40,6 @@ export default function ChromeDownloader() {
   const onDownload = async (format: 'crx' | 'zip' | 'both' = 'both') => {
     try {
       await handleDownload(format);
-      
       toast({
         title: "准备下载",
         description: "Chrome 扩展文件准备完成",
@@ -72,122 +71,115 @@ export default function ChromeDownloader() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-8">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-            Chrome 扩展 URL 或 ID
-          </label>
-          <Input
-            placeholder="请输入 Chrome 扩展 URL 或 32 位 ID"
-            value={extensionUrl}
-            onChange={onUrlChange}
-            onDoubleClick={handleInputDoubleClick}
-            className="w-full transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            支持格式：chrome.google.com/webstore/detail/... 或 32位扩展ID
-            <br />
-            <span className="text-blue-600">💡 提示：双击输入框可自动粘贴剪切板内容</span>
-          </div>
-        </div>
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
-        >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <LoadingSpinner />
-              解析中...
-            </span>
-          ) : (
-            <span className="flex items-center justify-center gap-2">
-              <Globe className="h-4 w-4" />
-              解析扩展信息
-            </span>
-          )}
-        </Button>
+    <form onSubmit={onSubmit} className="space-y-6">
+      <div className="space-y-3">
+        <label className="text-sm font-medium text-foreground">
+          Chrome 扩展 URL 或 ID
+        </label>
+        <Input
+          placeholder="chrome.google.com/webstore/detail/... 或 32 位扩展 ID"
+          value={extensionUrl}
+          onChange={onUrlChange}
+          onDoubleClick={handleInputDoubleClick}
+        />
+        <p className="text-xs text-muted-foreground">
+          支持 Chrome Web Store 链接或 32 位扩展 ID · <span className="text-primary">双击输入框可自动粘贴</span>
+        </p>
       </div>
+
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? (
+          <span className="flex items-center justify-center gap-2">
+            <LoadingSpinner />
+            解析中...
+          </span>
+        ) : (
+          <span className="flex items-center justify-center gap-2">
+            <Globe className="h-4 w-4" />
+            解析扩展信息
+          </span>
+        )}
+      </Button>
 
       {extensionInfo && (
         <div className="space-y-4">
-          <Card className="border border-green-100 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
-            <CardContent className="p-4">
-              <div className="text-sm space-y-1">
-                <div><span className="font-medium">扩展 ID:</span> {extensionInfo.id}</div>
-                <div><span className="font-medium">扩展名称:</span> {extensionInfo.name || 'Unknown'}</div>
-                <div><span className="font-medium">版本:</span> {extensionInfo.version || 'Unknown'}</div>
-                {extensionInfo.description && (
-                  <div><span className="font-medium">描述:</span> {extensionInfo.description}</div>
-                )}
+          {/* Extension Info */}
+          <Card className="border border-border/60 bg-secondary/30">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center mt-0.5">
+                  <Info className="h-4 w-4 text-primary" />
+                </div>
+                <div className="text-sm space-y-1 min-w-0">
+                  <p className="font-medium text-foreground">{extensionInfo.name || '未知扩展'}</p>
+                  <p className="text-muted-foreground">ID: {extensionInfo.id}</p>
+                  {extensionInfo.version && (
+                    <p className="text-muted-foreground">版本: {extensionInfo.version}</p>
+                  )}
+                  {extensionInfo.description && (
+                    <p className="text-muted-foreground line-clamp-2">{extensionInfo.description}</p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Download Buttons */}
+          <div className="grid grid-cols-3 gap-3">
             <Button
               type="button"
               onClick={() => onDownload('crx')}
               disabled={loading}
-              className="bg-orange-600 hover:bg-orange-700 transition-colors duration-200"
+              variant="outline"
+              className="gap-1.5"
             >
-              <span className="flex items-center justify-center gap-2">
-                <Download className="h-4 w-4" />
-                下载 CRX
-              </span>
+              <Download className="h-4 w-4" />
+              CRX
             </Button>
-            
             <Button
               type="button"
               onClick={() => onDownload('zip')}
               disabled={loading}
-              className="bg-purple-600 hover:bg-purple-700 transition-colors duration-200"
+              variant="outline"
+              className="gap-1.5"
             >
-              <span className="flex items-center justify-center gap-2">
-                <FileArchive className="h-4 w-4" />
-                下载 ZIP
-              </span>
+              <FileArchive className="h-4 w-4" />
+              ZIP
             </Button>
-            
             <Button
               type="button"
               onClick={() => onDownload('both')}
               disabled={loading}
-              className="bg-green-600 hover:bg-green-700 transition-colors duration-200"
+              className="gap-1.5"
             >
-              <span className="flex items-center justify-center gap-2">
-                <Download className="h-4 w-4" />
-                下载全部
-              </span>
+              <Download className="h-4 w-4" />
+              全部下载
             </Button>
           </div>
         </div>
       )}
 
       {downloadProgress && (
-        <Card className="border border-blue-100 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-          <CardContent className="p-4">
-            <div className="space-y-2">
+        <Card className="border border-border/60 bg-secondary/30">
+          <CardContent className="p-5">
+            <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span>下载状态</span>
-                <span>
-                  {downloadProgress.status === 'downloading' && '下载中'}
-                  {downloadProgress.status === 'converting' && '转换中'}
-                  {downloadProgress.status === 'completed' && '完成'}
-                  {downloadProgress.status === 'error' && '错误'}
+                <span className="text-foreground font-medium">
+                  {downloadProgress.status === 'downloading' && '下载中...'}
+                  {downloadProgress.status === 'converting' && '转换中...'}
+                  {downloadProgress.status === 'completed' && '下载完成'}
+                  {downloadProgress.status === 'error' && '下载出错'}
                 </span>
+                <span className="text-muted-foreground">{Math.round(downloadProgress.progress)}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
                 <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-primary h-full rounded-full transition-all duration-300 ease-out"
                   style={{ width: `${downloadProgress.progress}%` }}
-                ></div>
+                />
               </div>
               {downloadProgress.error && (
-                <div className="text-xs text-red-600 dark:text-red-400">
-                  {downloadProgress.error}
-                </div>
+                <p className="text-xs text-destructive">{downloadProgress.error}</p>
               )}
             </div>
           </CardContent>
@@ -195,45 +187,47 @@ export default function ChromeDownloader() {
       )}
 
       {(downloadUrls.crx || downloadUrls.zip) && (
-        <Card className="border border-green-100 bg-green-50 dark:bg-green-900/20 dark:border-green-800 transition-all duration-200 hover:shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Download className="h-5 w-5 text-green-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                下载链接
-              </span>
-            </div>
-            <div className="space-y-2">
-              {downloadUrls.crx && (
-                <div>
-                  <a
-                    href={downloadUrls.crx}
-                    download={`${extensionInfo?.id}.crx`}
-                    className="block text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 hover:underline transition-colors duration-200"
-                  >
-                    📦 {extensionInfo?.id}.crx
-                  </a>
-                  <span className="text-xs text-gray-500">Chrome 原生扩展格式</span>
+        <Card className="border border-primary/20 bg-primary/5">
+          <CardContent className="p-5 space-y-3">
+            {downloadUrls.crx && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{extensionInfo?.id}.crx</p>
+                    <p className="text-xs text-muted-foreground">Chrome 原生扩展格式</p>
+                  </div>
                 </div>
-              )}
-              {downloadUrls.zip && (
-                <div>
-                  <a
-                    href={downloadUrls.zip}
-                    download={`${extensionInfo?.id}.zip`}
-                    className="block text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 hover:underline transition-colors duration-200"
-                  >
-                    🗄 {extensionInfo?.id}.zip
-                  </a>
-                  <span className="text-xs text-gray-500">解压后可查看源码</span>
+                <a href={downloadUrls.crx} download={`${extensionInfo?.id}.crx`} className="flex-shrink-0">
+                  <Button type="button" size="sm" variant="outline" className="gap-1.5">
+                    <Download className="h-3.5 w-3.5" />
+                    下载
+                  </Button>
+                </a>
+              </div>
+            )}
+            {downloadUrls.crx && downloadUrls.zip && <div className="border-t border-border/40" />}
+            {downloadUrls.zip && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center">
+                    <FileArchive className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{extensionInfo?.id}.zip</p>
+                    <p className="text-xs text-muted-foreground">解压后可查看源码</p>
+                  </div>
                 </div>
-              )}
-              {downloadUrls.crx && !downloadUrls.zip && (
-                <div className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                  ⚠️ ZIP 转换可能失败，CRX 文件可直接安装
-                </div>
-              )}
-            </div>
+                <a href={downloadUrls.zip} download={`${extensionInfo?.id}.zip`} className="flex-shrink-0">
+                  <Button type="button" size="sm" variant="outline" className="gap-1.5">
+                    <Download className="h-3.5 w-3.5" />
+                    下载
+                  </Button>
+                </a>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

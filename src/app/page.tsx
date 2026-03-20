@@ -6,94 +6,81 @@ import { Card, CardContent } from "@/shared/ui/card";
 import VSCodeDownloader from "@/features/vscode/components/VSCodeDownloader";
 import DockerDownloader from "@/features/docker/components/DockerDownloader";
 import ChromeDownloader from "@/features/chrome/components/ChromeDownloader";
+import { Blocks, Globe, Container, Github } from "lucide-react";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("vscode");
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-6 py-24">
-        <div className="mx-auto max-w-4xl">
-          {/* Hero Section */}
-          <div className="text-center mb-16 animate-fade-in">
-            <h1 className="text-headline font-semibold text-foreground mb-6 tracking-tight">
-              OffDown
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              开发套件下载助手
-            </p>
-          </div>
-
-          {/* Main Card */}
-          <Card className="shadow-apple-lg border-0 bg-card/80 backdrop-blur-xl rounded-apple-lg overflow-hidden animate-slide-up">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-b from-apple-gray-6/50 to-transparent p-8 pb-0">
-                <Tabs
-                  value={activeTab}
-                  onValueChange={setActiveTab}
-                  className="w-full"
-                >
-                  <TabsList className="grid w-full grid-cols-3 bg-secondary/60 backdrop-blur-sm rounded-apple p-1 border border-border/40 h-50">
-                    <TabsTrigger
-                      value="vscode"
-                      className="rounded-apple-sm font-medium text-sm py-3 px-6 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200"
-                    >
-                      VSCode 插件
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="chrome"
-                      className="rounded-apple-sm font-medium text-sm py-3 px-6 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200"
-                    >
-                      Chrome 扩展
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="docker"
-                      className="rounded-apple-sm font-medium text-sm py-3 px-6 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200"
-                    >
-                      Docker 镜像
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-
-              {/* Tab Content */}
-              <div className="p-8 pt-6">
-                <div
-                  className={`transition-all duration-300 ${
-                    activeTab === "vscode"
-                      ? "opacity-100 transform translate-y-0"
-                      : "opacity-0 transform translate-y-2 pointer-events-none absolute"
-                  }`}
-                >
-                  <VSCodeDownloader />
-                </div>
-                <div
-                  className={`transition-all duration-300 ${
-                    activeTab === "chrome"
-                      ? "opacity-100 transform translate-y-0"
-                      : "opacity-0 transform translate-y-2 pointer-events-none absolute"
-                  }`}
-                >
-                  <ChromeDownloader />
-                </div>
-                <div
-                  className={`transition-all duration-300 ${
-                    activeTab === "docker"
-                      ? "opacity-100 transform translate-y-0"
-                      : "opacity-0 transform translate-y-2 pointer-events-none absolute"
-                  }`}
-                >
-                  <DockerDownloader />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Footer */}
-          <div className="text-center mt-16 animate-fade-in">
-            <p className="text-caption text-apple-gray-2">解析一下，一下就好</p>
-          </div>
+    <main className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
+        {/* Hero Section */}
+        <div className="text-center mb-10 animate-fade-in">
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 tracking-tight">
+            OffDown
+          </h1>
+          <p className="text-base text-muted-foreground max-w-md mx-auto leading-relaxed">
+            离线下载 VSCode 插件、Chrome 扩展、Docker 镜像
+          </p>
         </div>
+
+        {/* Main Card */}
+        <Card className="shadow-apple-lg border-0 bg-card/80 backdrop-blur-xl rounded-apple-lg overflow-hidden animate-slide-up">
+          <CardContent className="p-0">
+            <div className="border-b border-border/40 px-6 pt-6 pb-0">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-3 bg-secondary/60 backdrop-blur-sm rounded-apple p-1 border border-border/40 h-12">
+                  <TabsTrigger
+                    value="vscode"
+                    className="rounded-apple-sm font-medium text-sm py-2.5 px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-2"
+                  >
+                    <Blocks className="h-4 w-4" />
+                    VSCode 插件
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="chrome"
+                    className="rounded-apple-sm font-medium text-sm py-2.5 px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-2"
+                  >
+                    <Globe className="h-4 w-4" />
+                    Chrome 扩展
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="docker"
+                    className="rounded-apple-sm font-medium text-sm py-2.5 px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-2"
+                  >
+                    <Container className="h-4 w-4" />
+                    Docker 镜像
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {/* Tab Content */}
+            <div className="p-6 md:p-8">
+              {activeTab === "vscode" && <VSCodeDownloader />}
+              {activeTab === "chrome" && <ChromeDownloader />}
+              {activeTab === "docker" && <DockerDownloader />}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <footer className="text-center mt-10 space-y-2 animate-fade-in">
+          <p className="text-xs text-muted-foreground">解析一下，一下就好</p>
+          <a
+            href="https://github.com/liaoguoyin/offdown"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+          >
+            <Github className="h-3.5 w-3.5" />
+            GitHub
+          </a>
+        </footer>
       </div>
     </main>
   );
