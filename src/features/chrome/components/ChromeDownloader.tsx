@@ -1,6 +1,7 @@
-import { Input } from "@/shared/ui/input";
+import { InputWithHistory } from "@/shared/ui/input-with-history";
 import { Button } from "@/shared/ui/button";
 import { useToast } from "@/hooks/useToast";
+import { useHistory } from "@/hooks/useHistory";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import { Download, Globe, FileArchive, Package, Info } from "lucide-react";
@@ -8,6 +9,7 @@ import { useChromeDownloader } from "../hooks/useChromeDownloader";
 
 export default function ChromeDownloader() {
   const { toast } = useToast();
+  const history = useHistory("history:chrome");
   const {
     extensionUrl,
     extensionInfo,
@@ -22,6 +24,7 @@ export default function ChromeDownloader() {
   const onSubmit = async (e: React.FormEvent) => {
     try {
       await handleSubmit(e);
+      history.add(extensionUrl);
       toast({
         title: "解析成功",
         description: "成功解析 Chrome 扩展信息",
@@ -56,10 +59,14 @@ export default function ChromeDownloader() {
   return (
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-3">
-        <Input
+        <InputWithHistory
           placeholder="chrome.google.com/webstore/detail/... 或 32 位扩展 ID"
           value={extensionUrl}
           onChange={onUrlChange}
+          history={history.items}
+          onSelectHistory={(v) =>
+            onUrlChange({ target: { value: v } } as React.ChangeEvent<HTMLInputElement>)
+          }
         />
         <p className="text-xs text-muted-foreground">
           粘贴 Chrome 扩展页面链接或 ID

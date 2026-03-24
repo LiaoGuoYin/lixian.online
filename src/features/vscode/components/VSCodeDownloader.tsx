@@ -1,7 +1,8 @@
-import { Input } from "@/shared/ui/input";
+import { InputWithHistory } from "@/shared/ui/input-with-history";
 import { Button } from "@/shared/ui/button";
 import { SearchableSelect } from "@/shared/ui/searchable-select";
 import { useToast } from "@/hooks/useToast";
+import { useHistory } from "@/hooks/useHistory";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import { Download, Link as LinkIcon, Package } from "lucide-react";
@@ -9,6 +10,7 @@ import { useVSCodeDownloader } from "../hooks/useVSCodeDownloader";
 
 export default function VSCodeDownloader() {
   const { toast } = useToast();
+  const history = useHistory("history:vscode");
   const {
     url,
     versionList,
@@ -23,6 +25,7 @@ export default function VSCodeDownloader() {
   const onSubmit = async (e: React.FormEvent) => {
     try {
       await handleSubmit(e);
+      history.add(url);
       toast({
         title: "解析成功",
         description: "成功解析插件离线链接，并选中最新版本",
@@ -40,10 +43,14 @@ export default function VSCodeDownloader() {
   return (
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-3">
-        <Input
+        <InputWithHistory
           placeholder="https://marketplace.visualstudio.com/items?itemName=..."
           value={url}
           onChange={onUrlChange}
+          history={history.items}
+          onSelectHistory={(v) =>
+            onUrlChange({ target: { value: v } } as React.ChangeEvent<HTMLInputElement>)
+          }
         />
         <p className="text-xs text-muted-foreground">
           粘贴 VSCode 插件页面链接

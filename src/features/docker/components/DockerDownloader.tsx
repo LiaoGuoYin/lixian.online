@@ -1,7 +1,8 @@
-import { Input } from "@/shared/ui/input";
+import { InputWithHistory } from "@/shared/ui/input-with-history";
 import { Button } from "@/shared/ui/button";
 import { SearchableSelect } from "@/shared/ui/searchable-select";
 import { useToast } from "@/hooks/useToast";
+import { useHistory } from "@/hooks/useHistory";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import { Download, Container, Info, Archive, Search, ExternalLink } from "lucide-react";
@@ -10,6 +11,7 @@ import { dockerService } from "../api/DockerService";
 
 export default function DockerDownloader() {
   const { toast } = useToast();
+  const history = useHistory("history:docker");
   const {
     imageUrl,
     tagList,
@@ -28,6 +30,7 @@ export default function DockerDownloader() {
   const onSubmit = async (e: React.FormEvent) => {
     try {
       await handleSubmit(e);
+      history.add(imageUrl);
       toast({
         title: "解析成功",
         description: "成功解析 Docker 镜像信息",
@@ -66,10 +69,14 @@ export default function DockerDownloader() {
   return (
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-3">
-        <Input
+        <InputWithHistory
           placeholder="nginx:latest 或 hub.docker.com/r/library/nginx"
           value={imageUrl}
           onChange={onImageUrlChange}
+          history={history.items}
+          onSelectHistory={(v) =>
+            onImageUrlChange({ target: { value: v } } as React.ChangeEvent<HTMLInputElement>)
+          }
         />
         <p className="text-xs text-muted-foreground">
           输入镜像名称，如 nginx:latest
