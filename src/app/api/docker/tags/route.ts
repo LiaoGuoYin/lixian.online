@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { site } from '@/shared/lib/site';
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(dockerHubUrl, {
       method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; OffDown/1.0)',
+        'User-Agent': site.userAgent,
         'Accept': 'application/json',
       },
     });

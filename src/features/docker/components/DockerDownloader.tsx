@@ -72,17 +72,29 @@ export default function DockerDownloader() {
   return (
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-3">
-        <label className="text-sm font-medium text-foreground">
-          Docker 镜像名称或 URL
-        </label>
         <Input
           placeholder="nginx:latest 或 hub.docker.com/r/library/nginx"
           value={imageUrl}
           onChange={onImageUrlChange}
         />
         <p className="text-xs text-muted-foreground">
-          支持 nginx:latest、library/nginx:latest、Docker Hub URL
+          输入镜像名称，如 nginx:latest
         </p>
+        <div className="flex flex-wrap gap-2 mt-1">
+          {[
+            { label: "Nginx", value: "nginx:latest" },
+            { label: "Redis", value: "redis:alpine" },
+          ].map((example) => (
+            <button
+              key={example.label}
+              type="button"
+              onClick={() => onImageUrlChange({ target: { value: example.value } } as React.ChangeEvent<HTMLInputElement>)}
+              className="text-xs px-2.5 py-1 rounded-full bg-secondary/80 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+            >
+              试试 {example.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">

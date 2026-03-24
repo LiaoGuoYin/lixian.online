@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "@/shared/ui/toaster";
+import { site } from "@/shared/lib/site";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -9,10 +10,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "OffDown - 开发套件下载助手",
-  description: "离线下载 VSCode 插件、Chrome 扩展、Docker 镜像",
-  keywords: ["开发工具", "下载", "VSCode", "插件", "开发者工具"],
-  authors: [{ name: "OffDown Team" }],
+  title: `${site.name} - ${site.description}`,
+  description: `在线获取 VSCode 插件、Chrome 扩展、Docker 镜像的离线安装包`,
+  keywords: [...site.keywords],
+  authors: [{ name: site.author }],
 };
 
 export default function RootLayout({

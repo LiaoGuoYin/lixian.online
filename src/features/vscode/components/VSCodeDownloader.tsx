@@ -46,17 +46,41 @@ export default function VSCodeDownloader() {
   return (
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-3">
-        <label className="text-sm font-medium text-foreground">
-          插件 URL
-        </label>
         <Input
           placeholder="https://marketplace.visualstudio.com/items?itemName=..."
           value={url}
           onChange={onUrlChange}
         />
         <p className="text-xs text-muted-foreground">
-          支持 Visual Studio Marketplace 插件页面链接
+          粘贴 VSCode 插件页面链接
         </p>
+        <div className="flex flex-wrap gap-2 mt-1">
+          {[
+            {
+              label: "Python",
+              value:
+                "https://marketplace.visualstudio.com/items?itemName=ms-python.python",
+            },
+            {
+              label: "ESLint",
+              value:
+                "https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint",
+            },
+          ].map((example) => (
+            <button
+              key={example.label}
+              type="button"
+              onClick={() =>
+                onUrlChange({
+                  target: { value: example.value },
+                } as React.ChangeEvent<HTMLInputElement>)
+              }
+              className="text-xs px-2.5 py-1 rounded-full bg-secondary/80 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+            >
+              试试 {example.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">
@@ -68,7 +92,7 @@ export default function VSCodeDownloader() {
         ) : (
           <span className="flex items-center justify-center gap-2">
             <LinkIcon className="h-4 w-4" />
-            解析下载链接
+            解析插件链接
           </span>
         )}
       </Button>
@@ -108,7 +132,9 @@ export default function VSCodeDownloader() {
                   <p className="text-sm font-medium text-foreground truncate">
                     版本 {extensionInfo.version}
                   </p>
-                  <p className="text-xs text-muted-foreground">.vsix 离线安装包</p>
+                  <p className="text-xs text-muted-foreground">
+                    .vsix 离线安装包
+                  </p>
                 </div>
               </div>
               <a
@@ -117,7 +143,12 @@ export default function VSCodeDownloader() {
                 rel="noopener noreferrer"
                 className="flex-shrink-0 self-end sm:self-auto"
               >
-                <Button type="button" size="sm" variant="outline" className="gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                >
                   <Download className="h-3.5 w-3.5" />
                   下载
                 </Button>

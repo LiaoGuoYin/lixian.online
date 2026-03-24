@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { site } from '@/shared/lib/site';
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/vnd.docker.distribution.manifest.v2+json',
-        'User-Agent': 'Mozilla/5.0 (compatible; OffDown/1.0)',
+        'User-Agent': site.userAgent,
       },
     });
 
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/vnd.docker.distribution.manifest.v2+json',
-          'User-Agent': 'Mozilla/5.0 (compatible; OffDown/1.0)',
+          'User-Agent': site.userAgent,
         },
       });
       

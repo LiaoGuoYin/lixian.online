@@ -56,17 +56,29 @@ export default function ChromeDownloader() {
   return (
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-3">
-        <label className="text-sm font-medium text-foreground">
-          Chrome 扩展 URL 或 ID
-        </label>
         <Input
           placeholder="chrome.google.com/webstore/detail/... 或 32 位扩展 ID"
           value={extensionUrl}
           onChange={onUrlChange}
         />
         <p className="text-xs text-muted-foreground">
-          支持 Chrome Web Store 链接或 32 位扩展 ID
+          粘贴 Chrome 扩展页面链接或 ID
         </p>
+        <div className="flex flex-wrap gap-2 mt-1">
+          {[
+            { label: "uBlock Origin", value: "cjpalhdlnbpafiamejdnhcphjbkeiagm" },
+            { label: "React DevTools", value: "fmkadmapgofadopljbjfkapdkoienihi" },
+          ].map((example) => (
+            <button
+              key={example.label}
+              type="button"
+              onClick={() => onUrlChange({ target: { value: example.value } } as React.ChangeEvent<HTMLInputElement>)}
+              className="text-xs px-2.5 py-1 rounded-full bg-secondary/80 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+            >
+              试试 {example.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">
