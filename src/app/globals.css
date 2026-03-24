@@ -48,7 +48,7 @@
   --radius-sm: calc(var(--radius) - 4px);
 
   /* Font family */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  --font-sans: var(--font-inter), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
   /* Font size */
   --text-display: clamp(3rem, 8vw, 6rem);

@@ -1,11 +1,6 @@
 import { ExtensionInfo } from "@/features/vscode/types";
 import { post } from "@/shared/lib/http";
 
-// VSCode marketplace requires this specific Accept header
-const VSCODE_API_HEADERS = {
-  Accept: "application/json;api-version=3.0-preview.1",
-};
-
 class VSCodeService {
   extractExtensionInfo(url: string): ExtensionInfo {
     if (!url) return { publisher: "", extension: "", version: null };
@@ -42,7 +37,7 @@ class VSCodeService {
     extensionInfo: ExtensionInfo,
     maxVersions = 20,
   ): Promise<string[]> {
-    const url = `https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery`;
+    const url = `/api/vscode/query`;
     // flags: 0x1 (Versions) | 0x200 (IncludeLatestVersionOnly excluded)
     // Use 0x1 to only request version strings without heavy asset/file metadata
     const payload = {
@@ -63,7 +58,7 @@ class VSCodeService {
       flags: 0x1,
     };
 
-    const response = await post(url, payload, VSCODE_API_HEADERS);
+    const response = await post(url, payload);
 
     const extensions = response.data?.results?.[0]?.extensions;
     if (!extensions?.length) {
@@ -79,7 +74,7 @@ class VSCodeService {
     if (!extensionInfo.version) {
       throw new Error("Version is not set");
     }
-    return `https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${extensionInfo.publisher}/vsextensions/${extensionInfo.extension}/${extensionInfo.version}/vspackage`;
+    return `/api/vscode/download?publisher=${encodeURIComponent(extensionInfo.publisher)}&extension=${encodeURIComponent(extensionInfo.extension)}&version=${encodeURIComponent(extensionInfo.version)}`;
   }
 }
 
