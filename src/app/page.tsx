@@ -8,6 +8,10 @@ import DockerDownloader from "@/features/docker/components/DockerDownloader";
 import ChromeDownloader from "@/features/chrome/components/ChromeDownloader";
 import { Blocks, Globe, Container, Github } from "lucide-react";
 
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.1.0";
+const BUILD_TIME = process.env.NEXT_PUBLIC_BUILD_TIME ?? "unknown";
+const COMMIT_HASH = process.env.NEXT_PUBLIC_COMMIT_HASH ?? "unknown";
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState("vscode");
 
@@ -71,6 +75,12 @@ export default function Home() {
         {/* Footer */}
         <footer className="text-center mt-10 space-y-2 animate-fade-in">
           <p className="text-xs text-muted-foreground">解析一下，一下就好</p>
+          <p
+            className="text-xs text-muted-foreground/70"
+            title={`构建时间: ${BUILD_TIME} | Commit: ${COMMIT_HASH}`}
+          >
+            版本 v{APP_VERSION}
+          </p>
           <a
             href="https://github.com/liaoguoyin/offdown"
             target="_blank"
