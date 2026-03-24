@@ -42,3 +42,14 @@ TODO
 * [ ] 官网跳转
 * [ ] ICON 显示
 * [ ] Step 分步骤下载
+
+## 版本发布
+
+- 页面页脚版本号读取自 `package.json` 的 `version`
+- 悬浮显示构建时间和 commit 短 hash（由构建阶段注入）
+
+常用打版本命令：
+
+- `npm run version:patch`
+- `npm run version:minor`
+- `npm run version:major`
