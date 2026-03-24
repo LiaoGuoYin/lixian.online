@@ -70,7 +70,7 @@ export default function DockerDownloader() {
     : 0;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-3">
         <label className="text-sm font-medium text-foreground">
           Docker 镜像名称或 URL
@@ -187,7 +187,7 @@ export default function DockerDownloader() {
         <div className="space-y-4">
           {/* Image Info */}
           <Card className="border border-border/60 bg-secondary/30">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center mt-0.5">
                   <Info className="h-4 w-4 text-primary" />
@@ -225,7 +225,7 @@ export default function DockerDownloader() {
 
       {downloadProgress && (
         <Card className="border border-border/60 bg-secondary/30">
-          <CardContent className="p-5">
+          <CardContent className="p-4 sm:p-5">
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-foreground font-medium">
@@ -249,8 +249,8 @@ export default function DockerDownloader() {
 
       {downloadUrl && (
         <Card className="border border-primary/20 bg-primary/5">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center">
                   <Archive className="h-4 w-4 text-primary" />
@@ -265,7 +265,7 @@ export default function DockerDownloader() {
               <a
                 href={downloadUrl}
                 download={imageInfo ? `${imageInfo.repository}-${imageInfo.tag}.tar` : 'docker-image.tar'}
-                className="flex-shrink-0"
+                className="flex-shrink-0 self-end sm:self-auto"
               >
                 <Button type="button" size="sm" variant="outline" className="gap-1.5">
                   <Download className="h-3.5 w-3.5" />

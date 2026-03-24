@@ -17,10 +17,10 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background flex flex-col">
-      <div className="flex-1 mx-auto w-full max-w-3xl px-6 py-12 md:py-16">
+      <div className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 md:py-16">
         {/* Hero Section */}
-        <div className="text-center mb-10 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 tracking-tight">
+        <div className="text-center mb-6 md:mb-10 animate-fade-in">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2 md:mb-3 tracking-tight">
             OffDown
           </h1>
           <p className="text-base text-muted-foreground max-w-md mx-auto leading-relaxed">
@@ -31,40 +31,41 @@ export default function Home() {
         {/* Main Card */}
         <Card className="shadow-apple-lg border-0 bg-card/80 backdrop-blur-xl rounded-apple-lg overflow-hidden animate-slide-up">
           <CardContent className="p-0">
-            <div className="border-b border-border/40 px-6 pt-6 pb-0">
+            <div className="border-b border-border/40 px-3 sm:px-6 pt-4 sm:pt-6 pb-0">
               <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-3 bg-secondary/60 backdrop-blur-sm rounded-apple p-1 border border-border/40 h-12">
+                <TabsList className="grid w-full grid-cols-3 bg-secondary/60 backdrop-blur-sm rounded-apple p-1 border border-border/40 h-10 sm:h-12">
                   <TabsTrigger
                     value="vscode"
-                    className="rounded-apple-sm font-medium text-sm py-2.5 px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-2"
+                    className="rounded-apple-sm font-medium text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-1.5 sm:gap-2"
                   >
-                    <Blocks className="h-4 w-4" />
-                    VSCode 插件
+                    <Blocks className="h-4 w-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">VSCode 插件</span>
+                    <span className="sm:hidden">VSCode</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="chrome"
-                    className="rounded-apple-sm font-medium text-sm py-2.5 px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-2"
+                    className="rounded-apple-sm font-medium text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-1.5 sm:gap-2"
                   >
-                    <Globe className="h-4 w-4" />
-                    Chrome 扩展
+                    <Globe className="h-4 w-4 flex-shrink-0" />
+                    Chrome
                   </TabsTrigger>
                   <TabsTrigger
                     value="docker"
-                    className="rounded-apple-sm font-medium text-sm py-2.5 px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-2"
+                    className="rounded-apple-sm font-medium text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-1.5 sm:gap-2"
                   >
-                    <Container className="h-4 w-4" />
-                    Docker 镜像
+                    <Container className="h-4 w-4 flex-shrink-0" />
+                    Docker
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
 
             {/* Tab Content */}
-            <div className="p-6 md:p-8">
+            <div className="p-4 sm:p-6 md:p-8">
               {activeTab === "vscode" && <VSCodeDownloader />}
               {activeTab === "chrome" && <ChromeDownloader />}
               {activeTab === "docker" && <DockerDownloader />}
@@ -73,7 +74,7 @@ export default function Home() {
         </Card>
 
         {/* Footer */}
-        <footer className="text-center mt-10 space-y-2 animate-fade-in">
+        <footer className="text-center mt-6 md:mt-10 space-y-2 animate-fade-in">
           <p className="text-xs text-muted-foreground">解析一下，一下就好</p>
           <p
             className="text-xs text-muted-foreground/70"
