@@ -43,36 +43,6 @@ export function useChromeDownloader() {
     setDownloadProgress(null);
   }, []);
 
-  const handlePasteFromClipboard = useCallback(async () => {
-    try {
-      const clipboardText = await navigator.clipboard.readText();
-      if (clipboardText && (
-        clipboardText.includes('chrome.google.com/webstore') ||
-        clipboardText.includes('chromewebstore.google.com') ||
-        /^[a-z]{32}$/.test(clipboardText.toLowerCase())
-      )) {
-        setExtensionUrl(clipboardText);
-        
-        try {
-          const id = chromeService.extractExtensionId(clipboardText);
-          if (chromeService.isValidExtensionId(id)) {
-            // 获取扩展信息
-            const info = await chromeService.getExtensionInfo(id);
-            setExtensionInfo(info);
-          }
-        } catch (error) {
-          console.warn('解析扩展ID失败:', error);
-        }
-        
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.warn('无法读取剪切板内容:', error);
-      return false;
-    }
-  }, []);
-
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -209,6 +179,5 @@ export function useChromeDownloader() {
     onUrlChange,
     handleSubmit,
     handleDownload,
-    handlePasteFromClipboard,
   };
 }

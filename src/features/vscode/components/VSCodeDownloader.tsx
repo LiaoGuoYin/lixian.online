@@ -24,7 +24,6 @@ export default function VSCodeDownloader() {
     onUrlChange,
     onVersionChange,
     handleSubmit,
-    handlePasteFromClipboard,
   } = useVSCodeDownloader();
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -44,22 +43,6 @@ export default function VSCodeDownloader() {
     }
   };
 
-  const handleInputDoubleClick = async () => {
-    const success = await handlePasteFromClipboard();
-    if (success) {
-      toast({
-        title: "解析成功",
-        description: "已自动粘贴并解析插件信息，选中最新版本",
-      });
-    } else {
-      toast({
-        title: "粘贴失败",
-        description: "剪切板中没有有效的 VSCode 插件 URL",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div className="space-y-3">
@@ -70,10 +53,9 @@ export default function VSCodeDownloader() {
           placeholder="https://marketplace.visualstudio.com/items?itemName=..."
           value={url}
           onChange={onUrlChange}
-          onDoubleClick={handleInputDoubleClick}
         />
         <p className="text-xs text-muted-foreground">
-          支持 Visual Studio Marketplace 插件页面链接 · <span className="text-primary">双击输入框可自动粘贴</span>
+          支持 Visual Studio Marketplace 插件页面链接
         </p>
       </div>
 

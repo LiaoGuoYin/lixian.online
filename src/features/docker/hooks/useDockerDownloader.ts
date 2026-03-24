@@ -38,46 +38,6 @@ export function useDockerDownloader() {
     [imageInfo]
   );
 
-  const handlePasteFromClipboard = useCallback(async () => {
-    try {
-      const clipboardText = await navigator.clipboard.readText();
-      if (clipboardText && (
-        clipboardText.includes('docker.io') || 
-        clipboardText.includes('hub.docker.com') ||
-        clipboardText.match(/^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?\/[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?/) ||
-        clipboardText.match(/^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?:[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$/)
-      )) {
-        setImageUrl(clipboardText);
-        const extractedInfo = dockerService.extractImageInfo(clipboardText);
-        
-        try {
-          const tags = await dockerService.getTagList(extractedInfo);
-          setTagList(tags);
-          
-          // 如果提取到的tag在列表中，使用它；否则使用第一个
-          const selectedTag = tags.includes(extractedInfo.tag) ? extractedInfo.tag : tags[0];
-          if (selectedTag) {
-            setImageInfo({
-              ...extractedInfo,
-              tag: selectedTag,
-            });
-          } else {
-            setImageInfo(extractedInfo);
-          }
-        } catch (error) {
-          console.warn('获取标签列表失败:', error);
-          setImageInfo(extractedInfo);
-        }
-        
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.warn('无法读取剪切板内容:', error);
-      return false;
-    }
-  }, []);
-
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -216,6 +176,5 @@ export function useDockerDownloader() {
     onTagChange,
     handleSubmit,
     handleDownload,
-    handlePasteFromClipboard,
   };
 }
