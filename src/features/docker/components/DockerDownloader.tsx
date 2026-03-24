@@ -26,7 +26,6 @@ export default function DockerDownloader() {
     onTagChange,
     handleSubmit,
     handleDownload,
-    handlePasteFromClipboard,
   } = useDockerDownloader();
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -63,22 +62,6 @@ export default function DockerDownloader() {
     }
   };
 
-  const handleInputDoubleClick = async () => {
-    const success = await handlePasteFromClipboard();
-    if (success) {
-      toast({
-        title: "解析成功",
-        description: "已自动粘贴并解析镜像信息，选中可用标签",
-      });
-    } else {
-      toast({
-        title: "粘贴失败",
-        description: "剪切板中没有有效的 Docker 镜像名称或 URL",
-        variant: "destructive",
-      });
-    }
-  };
-
   const progressPercent = downloadProgress && downloadProgress.totalLayers > 0
     ? (downloadProgress.layerIndex / downloadProgress.totalLayers) * 100
     : 0;
@@ -93,10 +76,9 @@ export default function DockerDownloader() {
           placeholder="nginx:latest 或 hub.docker.com/r/library/nginx"
           value={imageUrl}
           onChange={onImageUrlChange}
-          onDoubleClick={handleInputDoubleClick}
         />
         <p className="text-xs text-muted-foreground">
-          支持 nginx:latest、library/nginx:latest、Docker Hub URL · <span className="text-primary">双击输入框可自动粘贴</span>
+          支持 nginx:latest、library/nginx:latest、Docker Hub URL
         </p>
       </div>
 

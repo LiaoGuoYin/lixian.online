@@ -17,7 +17,6 @@ export default function ChromeDownloader() {
     onUrlChange,
     handleSubmit,
     handleDownload,
-    handlePasteFromClipboard,
   } = useChromeDownloader();
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -54,22 +53,6 @@ export default function ChromeDownloader() {
     }
   };
 
-  const handleInputDoubleClick = async () => {
-    const success = await handlePasteFromClipboard();
-    if (success) {
-      toast({
-        title: "解析成功",
-        description: "已自动粘贴并解析扩展信息",
-      });
-    } else {
-      toast({
-        title: "粘贴失败",
-        description: "剪切板中没有有效的 Chrome 扩展 URL 或 ID",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div className="space-y-3">
@@ -80,10 +63,9 @@ export default function ChromeDownloader() {
           placeholder="chrome.google.com/webstore/detail/... 或 32 位扩展 ID"
           value={extensionUrl}
           onChange={onUrlChange}
-          onDoubleClick={handleInputDoubleClick}
         />
         <p className="text-xs text-muted-foreground">
-          支持 Chrome Web Store 链接或 32 位扩展 ID · <span className="text-primary">双击输入框可自动粘贴</span>
+          支持 Chrome Web Store 链接或 32 位扩展 ID
         </p>
       </div>
 
