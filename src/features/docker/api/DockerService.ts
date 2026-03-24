@@ -1,8 +1,10 @@
-import { DockerImageInfo, DockerManifest } from "@/features/docker/types";
+import { DockerImageInfo, DockerManifest, DockerSearchCandidate } from "@/features/docker/types";
 import { get } from "@/shared/lib/http";
 import { TarBuilder } from "@/features/docker/utils/tarBuilder";
 
 class DockerService {
+  private readonly dockerHubBaseUrl = "https://hub.docker.com";
+
   extractImageInfo(imageUrl: string): DockerImageInfo {
     if (!imageUrl) {
       return { registry: "", namespace: "", repository: "", tag: "" };
@@ -70,13 +72,54 @@ class DockerService {
       const url = `/api/docker/tags?namespace=${namespace}&repository=${imageInfo.repository}`;
       
       const response = await get(url, {});
-      const tags = response.data.results.map((tag: any) => tag.name);
+      const tags = (response.data.results ?? []).map((tag: { name: string }) => tag.name);
       
       return tags;
     } catch (error) {
       console.warn('获取标签列表失败:', error);
-      return [imageInfo.tag || 'latest'];
+      throw error;
     }
+  }
+
+  async searchImages(keyword: string, pageSize = 5): Promise<DockerSearchCandidate[]> {
+    try {
+      const query = encodeURIComponent(keyword.trim());
+      if (!query) return [];
+
+      const url = `/api/docker/search?q=${query}&page_size=${pageSize}`;
+      const response = await get(url, {});
+      const results = response.data?.results ?? [];
+
+      return results.map((item: {
+        repo_name: string;
+        short_description?: string;
+        star_count?: number;
+        pull_count?: number;
+      }) => {
+        const repoNameParts = item.repo_name?.split('/') ?? [];
+        const hasNamespace = repoNameParts.length > 1;
+        const namespace = hasNamespace ? repoNameParts[0] : 'library';
+        const repository = hasNamespace ? repoNameParts[1] : (repoNameParts[0] || '');
+        return {
+          namespace,
+          repository,
+          shortDescription: item.short_description || '',
+          starCount: item.star_count || 0,
+          pullCount: item.pull_count || 0,
+        };
+      }).filter((item: DockerSearchCandidate) => item.repository);
+    } catch (error) {
+      console.warn('搜索镜像失败:', error);
+      return [];
+    }
+  }
+
+  getDockerHubRepoUrl(namespace: string, repository: string): string {
+    return `${this.dockerHubBaseUrl}/r/${namespace || "library"}/${repository}`;
+  }
+
+  getDockerHubSearchUrl(keyword: string): string {
+    return `${this.dockerHubBaseUrl}/search?q=${encodeURIComponent(keyword.trim())}`;
   }
 
   async getManifest(imageInfo: DockerImageInfo): Promise<DockerManifest> {

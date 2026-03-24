@@ -1,7 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { dockerService } from "../api/DockerService";
-import { DockerImageInfo, DockerDownloadProgress } from "../types";
+import { DockerImageInfo, DockerDownloadProgress, DockerSearchCandidate } from "../types";
 import { get } from "@/shared/lib/http";
+
+const IMAGE_NOT_FOUND_MESSAGE = "未找到对应镜像，请检查名称或从候选镜像中选择";
 
 export function useDockerDownloader() {
   const [imageUrl, setImageUrl] = useState("");
@@ -10,6 +12,8 @@ export function useDockerDownloader() {
   const [downloadProgress, setDownloadProgress] = useState<DockerDownloadProgress | null>(null);
   const [loading, setLoading] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState("");
+  const [searchCandidates, setSearchCandidates] = useState<DockerSearchCandidate[]>([]);
+  const [imageNotFound, setImageNotFound] = useState(false);
 
   // Track current blob URL so we can revoke it on re-download or unmount
   const blobUrlRef = useRef<string>("");
@@ -27,6 +31,8 @@ export function useDockerDownloader() {
     setImageInfo(extracted);
     setTagList([]);
     setDownloadUrl("");
+    setImageNotFound(false);
+    setSearchCandidates([]);
   }, []);
 
   const onTagChange = useCallback(
@@ -38,10 +44,18 @@ export function useDockerDownloader() {
     [imageInfo]
   );
 
+  const handleImageNotFound = useCallback(async (searchKeyword: string) => {
+    setImageNotFound(true);
+    const candidates = await dockerService.searchImages(searchKeyword, 5);
+    setSearchCandidates(candidates);
+  }, []);
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       setLoading(true);
+      setImageNotFound(false);
+      setSearchCandidates([]);
 
       try {
         if (!imageUrl) {
@@ -50,6 +64,13 @@ export function useDockerDownloader() {
 
         if (imageInfo && !tagList.length) {
           const tags = await dockerService.getTagList(imageInfo);
+
+          if (!tags.length) {
+            const searchKeyword = imageInfo.repository || imageUrl;
+            await handleImageNotFound(searchKeyword);
+            throw new Error(IMAGE_NOT_FOUND_MESSAGE);
+          }
+
           setTagList(tags);
           
           // 如果当前没有选择tag，自动选择第一个
@@ -58,12 +79,18 @@ export function useDockerDownloader() {
           }
         }
       } catch (error) {
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError?.response?.status === 404 && imageInfo) {
+          const searchKeyword = imageInfo.repository || imageUrl;
+          await handleImageNotFound(searchKeyword);
+          throw new Error(IMAGE_NOT_FOUND_MESSAGE);
+        }
         throw error;
       } finally {
         setLoading(false);
       }
     },
-    [imageUrl, imageInfo, tagList]
+    [handleImageNotFound, imageUrl, imageInfo, tagList]
   );
 
   const handleDownload = useCallback(async () => {
@@ -172,6 +199,8 @@ export function useDockerDownloader() {
     downloadProgress,
     downloadUrl,
     loading,
+    imageNotFound,
+    searchCandidates,
     onImageUrlChange,
     onTagChange,
     handleSubmit,

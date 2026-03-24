@@ -25,6 +25,14 @@ export interface DockerTagInfo {
   tags: string[];
 }
 
+export interface DockerSearchCandidate {
+  namespace: string;
+  repository: string;
+  shortDescription: string;
+  starCount: number;
+  pullCount: number;
+}
+
 export interface DockerDownloadProgress {
   layerIndex: number;
   totalLayers: number;
