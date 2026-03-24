@@ -1,4 +1,4 @@
-import { DockerImageInfo, DockerManifest } from "@/features/docker/types";
+import { DockerImageInfo, DockerManifest, DockerSearchResult } from "@/features/docker/types";
 import { get } from "@/shared/lib/http";
 import { TarBuilder } from "@/features/docker/utils/tarBuilder";
 
@@ -64,19 +64,36 @@ class DockerService {
   }
 
   async getTagList(imageInfo: DockerImageInfo): Promise<string[]> {
-    try {
-      // 使用代理 API 避免 CORS 问题
-      const namespace = imageInfo.namespace || 'library';
-      const url = `/api/docker/tags?namespace=${namespace}&repository=${imageInfo.repository}`;
-      
-      const response = await get(url, {});
-      const tags = response.data.results.map((tag: any) => tag.name);
-      
-      return tags;
-    } catch (error) {
-      console.warn('获取标签列表失败:', error);
-      return [imageInfo.tag || 'latest'];
+    const namespace = imageInfo.namespace || 'library';
+    const url = `/api/docker/tags?namespace=${namespace}&repository=${imageInfo.repository}`;
+
+    const response = await get(url, {});
+    const results = response.data.results;
+
+    if (!results || results.length === 0) {
+      throw new Error(`镜像 ${namespace}/${imageInfo.repository} 不存在或没有可用标签`);
     }
+
+    return results.map((tag: any) => tag.name);
+  }
+
+  async searchImages(query: string): Promise<DockerSearchResult[]> {
+    try {
+      const url = `/api/docker/search?q=${encodeURIComponent(query)}`;
+      const response = await get(url, {});
+      return response.data.results || [];
+    } catch (error) {
+      console.warn('搜索镜像失败:', error);
+      return [];
+    }
+  }
+
+  getDockerHubUrl(imageInfo: DockerImageInfo): string {
+    const namespace = imageInfo.namespace || 'library';
+    if (namespace === 'library') {
+      return `https://hub.docker.com/_/${imageInfo.repository}`;
+    }
+    return `https://hub.docker.com/r/${namespace}/${imageInfo.repository}`;
   }
 
   async getManifest(imageInfo: DockerImageInfo): Promise<DockerManifest> {

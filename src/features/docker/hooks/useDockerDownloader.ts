@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { dockerService } from "../api/DockerService";
-import { DockerImageInfo, DockerDownloadProgress } from "../types";
+import { DockerImageInfo, DockerDownloadProgress, DockerSearchResult } from "../types";
 import { get } from "@/shared/lib/http";
 
 export function useDockerDownloader() {
@@ -10,6 +10,7 @@ export function useDockerDownloader() {
   const [downloadProgress, setDownloadProgress] = useState<DockerDownloadProgress | null>(null);
   const [loading, setLoading] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState("");
+  const [searchResults, setSearchResults] = useState<DockerSearchResult[]>([]);
 
   // Track current blob URL so we can revoke it on re-download or unmount
   const blobUrlRef = useRef<string>("");
@@ -27,6 +28,7 @@ export function useDockerDownloader() {
     setImageInfo(extracted);
     setTagList([]);
     setDownloadUrl("");
+    setSearchResults([]);
   }, []);
 
   const onTagChange = useCallback(
@@ -82,6 +84,7 @@ export function useDockerDownloader() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       setLoading(true);
+      setSearchResults([]);
 
       try {
         if (!imageUrl) {
@@ -89,12 +92,20 @@ export function useDockerDownloader() {
         }
 
         if (imageInfo && !tagList.length) {
-          const tags = await dockerService.getTagList(imageInfo);
-          setTagList(tags);
-          
-          // 如果当前没有选择tag，自动选择第一个
-          if (!imageInfo.tag && tags.length > 0) {
-            setImageInfo({ ...imageInfo, tag: tags[0] });
+          try {
+            const tags = await dockerService.getTagList(imageInfo);
+            setTagList(tags);
+
+            // 如果当前没有选择tag，自动选择第一个
+            if (!imageInfo.tag && tags.length > 0) {
+              setImageInfo({ ...imageInfo, tag: tags[0] });
+            }
+          } catch (tagError) {
+            // 镜像不存在，尝试搜索候选项
+            const query = imageInfo.repository || imageUrl;
+            const results = await dockerService.searchImages(query);
+            setSearchResults(results);
+            throw tagError;
           }
         }
       } catch (error) {
@@ -212,6 +223,7 @@ export function useDockerDownloader() {
     downloadProgress,
     downloadUrl,
     loading,
+    searchResults,
     onImageUrlChange,
     onTagChange,
     handleSubmit,

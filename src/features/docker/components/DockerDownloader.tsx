@@ -10,8 +10,9 @@ import {
 import { useToast } from "@/hooks/useToast";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
-import { Download, Container, Info, Archive } from "lucide-react";
+import { Download, Container, Info, Archive, ExternalLink, Search, Star } from "lucide-react";
 import { useDockerDownloader } from "../hooks/useDockerDownloader";
+import { dockerService } from "../api/DockerService";
 
 export default function DockerDownloader() {
   const { toast } = useToast();
@@ -27,6 +28,7 @@ export default function DockerDownloader() {
     handleSubmit,
     handleDownload,
     handlePasteFromClipboard,
+    searchResults,
   } = useDockerDownloader();
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -114,6 +116,54 @@ export default function DockerDownloader() {
         )}
       </Button>
 
+      {searchResults.length > 0 && (
+        <Card className="border border-border/60 bg-secondary/30">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm font-medium text-foreground">你是否在找：</p>
+            </div>
+            <div className="space-y-2">
+              {searchResults.map((result) => {
+                const parts = result.repo_name.split('/');
+                const namespace = parts.length > 1 ? parts[0] : 'library';
+                const repo = parts.length > 1 ? parts[1] : parts[0];
+                const hubUrl = namespace === 'library'
+                  ? `https://hub.docker.com/_/${repo}`
+                  : `https://hub.docker.com/r/${namespace}/${repo}`;
+                return (
+                  <div key={result.repo_name} className="flex items-center justify-between gap-2 py-1.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground truncate">{result.repo_name}</p>
+                        {result.is_official && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium shrink-0">官方</span>
+                        )}
+                        {result.star_count > 0 && (
+                          <span className="flex items-center gap-0.5 text-xs text-muted-foreground shrink-0">
+                            <Star className="h-3 w-3" />
+                            {result.star_count}
+                          </span>
+                        )}
+                      </div>
+                      {result.short_description && (
+                        <p className="text-xs text-muted-foreground truncate">{result.short_description}</p>
+                      )}
+                    </div>
+                    <a href={hubUrl} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                      <Button type="button" size="sm" variant="outline" className="gap-1.5 text-xs">
+                        <ExternalLink className="h-3 w-3" />
+                        Docker Hub
+                      </Button>
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {tagList.length > 0 && (
         <div className="space-y-3">
           <label className="text-sm font-medium text-foreground">
@@ -151,6 +201,15 @@ export default function DockerDownloader() {
                   <p className="text-muted-foreground">仓库: {imageInfo.registry}</p>
                   <p className="text-muted-foreground">命名空间: {imageInfo.namespace || 'library'}</p>
                   <p className="text-muted-foreground">标签: {imageInfo.tag}</p>
+                  <a
+                    href={dockerService.getDockerHubUrl(imageInfo)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    在 Docker Hub 查看
+                  </a>
                 </div>
               </div>
             </CardContent>

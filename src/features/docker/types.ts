@@ -25,6 +25,13 @@ export interface DockerTagInfo {
   tags: string[];
 }
 
+export interface DockerSearchResult {
+  repo_name: string;
+  short_description: string;
+  star_count: number;
+  is_official: boolean;
+}
+
 export interface DockerDownloadProgress {
   layerIndex: number;
   totalLayers: number;
