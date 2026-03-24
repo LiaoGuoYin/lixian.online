@@ -27,8 +27,7 @@ export function useDockerDownloader() {
   const onImageUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newUrl = e.target.value;
     setImageUrl(newUrl);
-    const extracted = dockerService.extractImageInfo(newUrl);
-    setImageInfo(extracted);
+    setImageInfo(null);
     setTagList([]);
     setDownloadUrl("");
     setImageNotFound(false);
@@ -57,16 +56,20 @@ export function useDockerDownloader() {
       setImageNotFound(false);
       setSearchCandidates([]);
 
+      let extracted: DockerImageInfo | null = null;
       try {
         if (!imageUrl) {
           throw new Error("请输入 Docker 镜像名称或 URL");
         }
 
-        if (imageInfo && !tagList.length) {
-          const tags = await dockerService.getTagList(imageInfo);
+        extracted = dockerService.extractImageInfo(imageUrl);
+        setImageInfo(extracted);
+
+        if (extracted && !tagList.length) {
+          const tags = await dockerService.getTagList(extracted);
 
           if (!tags.length) {
-            const searchKeyword = imageInfo.repository || imageUrl;
+            const searchKeyword = extracted.repository || imageUrl;
             await handleImageNotFound(searchKeyword);
             throw new Error(IMAGE_NOT_FOUND_MESSAGE);
           }
@@ -74,14 +77,14 @@ export function useDockerDownloader() {
           setTagList(tags);
           
           // 如果当前没有选择tag，自动选择第一个
-          if (!imageInfo.tag && tags.length > 0) {
-            setImageInfo({ ...imageInfo, tag: tags[0] });
+          if (!extracted.tag && tags.length > 0) {
+            setImageInfo({ ...extracted, tag: tags[0] });
           }
         }
       } catch (error) {
         const axiosError = error as { response?: { status?: number } };
-        if (axiosError?.response?.status === 404 && imageInfo) {
-          const searchKeyword = imageInfo.repository || imageUrl;
+        if (axiosError?.response?.status === 404) {
+          const searchKeyword = extracted?.repository || imageUrl;
           await handleImageNotFound(searchKeyword);
           throw new Error(IMAGE_NOT_FOUND_MESSAGE);
         }
@@ -90,7 +93,7 @@ export function useDockerDownloader() {
         setLoading(false);
       }
     },
-    [handleImageNotFound, imageUrl, imageInfo, tagList]
+    [handleImageNotFound, imageUrl, tagList]
   );
 
   const handleDownload = useCallback(async () => {
