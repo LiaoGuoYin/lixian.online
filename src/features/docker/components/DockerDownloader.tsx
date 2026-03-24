@@ -10,8 +10,9 @@ import {
 import { useToast } from "@/hooks/useToast";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
-import { Download, Container, Info, Archive } from "lucide-react";
+import { Download, Container, Info, Archive, Search, ExternalLink } from "lucide-react";
 import { useDockerDownloader } from "../hooks/useDockerDownloader";
+import { dockerService } from "../api/DockerService";
 
 export default function DockerDownloader() {
   const { toast } = useToast();
@@ -22,6 +23,8 @@ export default function DockerDownloader() {
     downloadProgress,
     downloadUrl,
     loading,
+    imageNotFound,
+    searchCandidates,
     onImageUrlChange,
     onTagChange,
     handleSubmit,
@@ -119,7 +122,68 @@ export default function DockerDownloader() {
         </div>
       )}
 
-      {imageInfo?.tag && (
+      {imageNotFound && imageInfo && (
+        <Card className="border border-destructive/30 bg-destructive/5">
+          <CardContent className="p-5 space-y-3">
+            <div className="text-sm text-destructive font-medium">
+              未找到对应镜像：{imageInfo.namespace || "library"}/{imageInfo.repository}
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              <a
+                href={dockerService.getDockerHubSearchUrl(imageInfo.repository || imageUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-primary hover:underline"
+              >
+                <Search className="h-3.5 w-3.5" />
+                前往 Docker Hub 搜索
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+              <a
+                href={dockerService.getDockerHubRepoUrl(imageInfo.namespace || "library", imageInfo.repository)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-primary hover:underline"
+              >
+                预览当前仓库页
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+            {searchCandidates.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">候选镜像（Top {searchCandidates.length}）</p>
+                <div className="space-y-2">
+                  {searchCandidates.map((candidate) => (
+                    <a
+                      key={`${candidate.namespace}/${candidate.repository}`}
+                      href={dockerService.getDockerHubRepoUrl(candidate.namespace, candidate.repository)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-md border border-border/60 p-3 hover:bg-secondary/60 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {candidate.namespace}/{candidate.repository}
+                          </p>
+                          {candidate.shortDescription && (
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {candidate.shortDescription}
+                            </p>
+                          )}
+                        </div>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {tagList.length > 0 && imageInfo?.tag && (
         <div className="space-y-4">
           {/* Image Info */}
           <Card className="border border-border/60 bg-secondary/30">
