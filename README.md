@@ -1,8 +1,8 @@
-# 离线 · Online
+# Lixian.Online
 
-在线搞定离线包 —— 帮助开发者在受限网络环境下获取 VSCode 插件、Chrome 扩展和 Docker 镜像的离线安装包。
+在线搞定离线包 —— 帮助开发者获取 VSCode 插件、Chrome 扩展和 Docker 镜像的离线安装包，并在受限网络环境下安装。
 
-**在线体验：** [lixian.online](https://lixian.online)
+**在线体验：** [lixian.online](https://lixian.online) | [English](./README.en.md)
 
 ## 功能
 

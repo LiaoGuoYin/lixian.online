@@ -5,7 +5,12 @@ import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
-import { Download, Link as LinkIcon, Package, ExternalLink } from "lucide-react";
+import {
+  Download,
+  Link as LinkIcon,
+  Package,
+  ExternalLink,
+} from "lucide-react";
 import { useVSCodeDownloader } from "../hooks/useVSCodeDownloader";
 
 export default function VSCodeDownloader() {
@@ -28,13 +33,12 @@ export default function VSCodeDownloader() {
       history.add(url);
       toast({
         title: "解析成功",
-        description: "成功解析插件离线链接，并选中最新版本",
+        description: "已选中最新版本",
       });
     } catch (error) {
       toast({
         title: "解析失败",
-        description:
-          error instanceof Error ? error.message : "请检查 URL 是否正确",
+        description: error instanceof Error ? error.message : "URL 格式有误",
         variant: "destructive",
       });
     }
@@ -43,17 +47,8 @@ export default function VSCodeDownloader() {
   return (
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-3">
-        <InputWithHistory
-          placeholder="https://marketplace.visualstudio.com/items?itemName=..."
-          value={url}
-          onChange={onUrlChange}
-          history={history.items}
-          onSelectHistory={(v) =>
-            onUrlChange({ target: { value: v } } as React.ChangeEvent<HTMLInputElement>)
-          }
-        />
         <p className="text-xs text-muted-foreground">
-          粘贴 VSCode 插件页面链接，可前往{" "}
+          仅支持插件页链接，或前往{" "}
           <a
             href="https://marketplace.visualstudio.com/vscode"
             target="_blank"
@@ -62,20 +57,30 @@ export default function VSCodeDownloader() {
           >
             VSCode Marketplace
             <ExternalLink className="h-3 w-3" />
-          </a>{" "}
-          搜索所需插件并复制链接（大陆可直接访问）
+          </a>
         </p>
+        <InputWithHistory
+          placeholder="marketplace.visualstudio.com/items?itemName=..."
+          value={url}
+          onChange={onUrlChange}
+          history={history.items}
+          onSelectHistory={(v) =>
+            onUrlChange({
+              target: { value: v },
+            } as React.ChangeEvent<HTMLInputElement>)
+          }
+        />
         <div className="flex flex-wrap gap-2 mt-1">
           {[
             {
-              label: "Python",
+              label: "Claude Code",
               value:
-                "https://marketplace.visualstudio.com/items?itemName=ms-python.python",
+                "https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code",
             },
             {
-              label: "ESLint",
+              label: "Remote SSH",
               value:
-                "https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint",
+                "https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh",
             },
           ].map((example) => (
             <button

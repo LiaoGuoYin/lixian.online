@@ -39,15 +39,13 @@ export default function ChromeDownloader() {
       history.add(extensionUrl);
       toast({
         title: "解析成功",
-        description: "成功解析 Chrome 扩展信息",
+        description: "已解析扩展信息",
       });
     } catch (error) {
       toast({
         title: "解析失败",
         description:
-          error instanceof Error
-            ? error.message
-            : "请检查扩展 URL 或 ID 是否正确",
+          error instanceof Error ? error.message : "扩展 URL 或 ID 有误",
         variant: "destructive",
       });
     }
@@ -58,13 +56,12 @@ export default function ChromeDownloader() {
       await handleDownload(format);
       toast({
         title: "准备下载",
-        description: "Chrome 扩展文件准备完成",
+        description: "文件已就绪",
       });
     } catch (error) {
       toast({
         title: "下载失败",
-        description:
-          error instanceof Error ? error.message : "下载过程中发生错误",
+        description: error instanceof Error ? error.message : "下载出错",
         variant: "destructive",
       });
     }
@@ -73,8 +70,20 @@ export default function ChromeDownloader() {
   return (
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          输入名称搜索或直接粘贴 ID，或前往{" "}
+          <a
+            href="https://chromewebstore.google.com/category/extensions"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 text-primary hover:underline"
+          >
+            Chrome Store
+            <ExternalLink className="h-3 w-3" />
+          </a>{" "}
+        </p>
         <InputWithHistory
-          placeholder="搜索扩展名称，或输入 32 位扩展 ID"
+          placeholder="扩展名称、ID 或商店链接"
           value={extensionUrl}
           onChange={onUrlChange}
           history={history.items}
@@ -84,19 +93,6 @@ export default function ChromeDownloader() {
             } as React.ChangeEvent<HTMLInputElement>)
           }
         />
-        <p className="text-xs text-muted-foreground">
-          输入关键词搜索 Chrome 扩展，或直接粘贴扩展 ID，也可前往{" "}
-          <a
-            href="https://chromewebstore.google.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-0.5 text-primary hover:underline"
-          >
-            Chrome 应用商店
-            <ExternalLink className="h-3 w-3" />
-          </a>{" "}
-          浏览并复制扩展 ID（需魔法上网）
-        </p>
         {searching && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -126,12 +122,12 @@ export default function ChromeDownloader() {
         <div className="flex flex-wrap gap-2 mt-1">
           {[
             {
-              label: "uBlock Origin",
-              value: "cjpalhdlnbpafiamejdnhcphjbkeiagm",
+              label: "沉浸式翻译",
+              value: "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
             },
             {
-              label: "React DevTools",
-              value: "fmkadmapgofadopljbjfkapdkoienihi",
+              label: "篡改猴",
+              value: "dhdgffkkebhmkfjojejmpbldmpobfkfo",
             },
           ].map((example) => (
             <button

@@ -1,5 +1,5 @@
 export const site = {
-  name: "离线 · Online",
+  name: "lixian.online",
   domain: "lixian.online",
   url: "https://lixian.online",
   description: "在线搞定离线包",

@@ -6,7 +6,7 @@
 
 ## 1. 项目概述
 
-**名称：** 离线 · Online（lixian.online）
+**名称：** Lixian.Online（lixian.online）
 
 **定位：** 在线离线包下载工具，帮助用户在受限网络环境下获取开发资源的离线安装包。
 
@@ -160,6 +160,7 @@ lixian.online/
 **核心约束：浏览器永远不直接调用外部服务。**
 
 所有外部 API 调用通过 Next.js API Route Handler 代理，原因：
+
 1. **CORS 绕过** — Docker Registry / Chrome Update Service 不允许浏览器跨域请求
 2. **认证隔离** — Token 不暴露在前端代码中
 3. **请求伪装** — 服务端可设置自定义 User-Agent
@@ -167,6 +168,7 @@ lixian.online/
 **例外：** VSCode 插件的最终下载链接（`vspackage` URL）直接在浏览器打开，因为 Marketplace 允许跨域下载。
 
 所有 API 路由均返回 CORS 头和 OPTIONS 预检响应：
+
 ```
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, OPTIONS
@@ -437,11 +439,13 @@ manifest.json                      # 顶层清单
 #### ID 生成算法
 
 - **imageId**：对 `"{namespace}/{repository}:{tag}"` 字符串做简单哈希（DJB2 变体），取绝对值后转 16 进制，左补零至 12 位
+
   ```
   hash = 0
   for each char: hash = ((hash << 5) - hash) + charCode; hash &= hash
   return abs(hash).toString(16).padStart(12, '0')
   ```
+
 - **layerId**：取 digest 的 `sha256:` 前缀后的前 12 个字符
 
 #### 解压与哈希流程
@@ -722,6 +726,7 @@ interface ChromeSearchResult {
 ### Blob URL 管理
 
 所有功能模块通过 `useRef` 跟踪 Blob URL，遵循：
+
 1. 创建新 Blob URL 前，先 `URL.revokeObjectURL()` 旧的
 2. 组件卸载时的 cleanup effect 中释放所有 Blob URL
 
@@ -855,6 +860,7 @@ Apple 风格设计语言，使用 CSS 变量定义 HSL 色值，支持明/暗模
 ### 页面布局
 
 单页应用，居中卡片布局：
+
 - 最大宽度 `max-w-3xl` (48rem)
 - 卡片内使用 Radix Tabs 切换三个功能
 - 三栏等宽 Tab 按钮（VSCode 插件 | Chrome 拓展 | Docker 镜像）
@@ -872,7 +878,7 @@ Apple 风格设计语言，使用 CSS 变量定义 HSL 色值，支持明/暗模
 
 ```typescript
 const site = {
-  name: "离线 · Online",
+  name: "Lixian.Online",
   domain: "lixian.online",
   url: "https://lixian.online",
   description: "在线搞定离线包",

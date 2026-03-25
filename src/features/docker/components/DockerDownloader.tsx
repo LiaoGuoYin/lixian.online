@@ -40,13 +40,12 @@ export default function DockerDownloader() {
       history.add(imageUrl);
       toast({
         title: "解析成功",
-        description: "成功解析 Docker 镜像信息",
+        description: "已解析镜像信息",
       });
     } catch (error) {
       toast({
         title: "解析失败",
-        description:
-          error instanceof Error ? error.message : "请检查镜像名称是否正确",
+        description: error instanceof Error ? error.message : "镜像名称有误",
         variant: "destructive",
       });
     }
@@ -57,13 +56,12 @@ export default function DockerDownloader() {
       await handleDownload();
       toast({
         title: "准备下载",
-        description: "Docker 镜像打包完成，开始下载",
+        description: "打包完成，开始下载",
       });
     } catch (error) {
       toast({
         title: "下载失败",
-        description:
-          error instanceof Error ? error.message : "下载过程中发生错误",
+        description: error instanceof Error ? error.message : "下载出错",
         variant: "destructive",
       });
     }
@@ -77,6 +75,18 @@ export default function DockerDownloader() {
   return (
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          输入镜像名，或前往{" "}
+          <a
+            href="https://hub.docker.com/search"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 text-primary hover:underline"
+          >
+            Docker Hub
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </p>
         <InputWithHistory
           placeholder="nginx:latest 或 hub.docker.com/r/library/nginx"
           value={imageUrl}
@@ -88,19 +98,6 @@ export default function DockerDownloader() {
             } as React.ChangeEvent<HTMLInputElement>)
           }
         />
-        <p className="text-xs text-muted-foreground">
-          输入镜像名称，如 nginx:latest，可前往{" "}
-          <a
-            href="https://hub.docker.com/search"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-0.5 text-primary hover:underline"
-          >
-            Docker Hub
-            <ExternalLink className="h-3 w-3" />
-          </a>{" "}
-          搜索所需镜像（需魔法上网）
-        </p>
         <div className="flex flex-wrap gap-2 mt-1">
           {[
             { label: "Nginx", value: "nginx:latest" },
@@ -162,7 +159,7 @@ export default function DockerDownloader() {
                 className="inline-flex items-center gap-1 text-primary hover:underline"
               >
                 <Search className="h-3.5 w-3.5" />
-                前往 Docker Hub 搜索
+                前往 DockerHub 搜索
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
               <a

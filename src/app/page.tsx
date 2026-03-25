@@ -4,7 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { Card, CardContent } from "@/shared/ui/card";
-import { Blocks, Globe, Container, ExternalLink } from "lucide-react";
+import { Blocks, Globe, Container, Github } from "lucide-react";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 
 const DynamicFallback = () => (
@@ -15,15 +15,15 @@ const DynamicFallback = () => (
 
 const VSCodeDownloader = dynamic(
   () => import("@/features/vscode/components/VSCodeDownloader"),
-  { ssr: false, loading: DynamicFallback }
+  { ssr: false, loading: DynamicFallback },
 );
 const ChromeDownloader = dynamic(
   () => import("@/features/chrome/components/ChromeDownloader"),
-  { ssr: false, loading: DynamicFallback }
+  { ssr: false, loading: DynamicFallback },
 );
 const DockerDownloader = dynamic(
   () => import("@/features/docker/components/DockerDownloader"),
-  { ssr: false, loading: DynamicFallback }
+  { ssr: false, loading: DynamicFallback },
 );
 import { site } from "@/shared/lib/site";
 
@@ -39,8 +39,14 @@ export default function Home() {
       <div className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 py-12 md:py-24">
         {/* Hero Section */}
         <div className="text-center mb-8 md:mb-12 animate-fade-in">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2 md:mb-3 tracking-tight">
-            {site.name}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2 md:mb-3 tracking-tight flex items-baseline justify-center gap-0.5 sm:gap-1">
+            <span>Lixian</span>
+            <img
+              src="/favicon.ico"
+              alt=""
+              className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4"
+            />
+            <span>Online</span>
           </h1>
           <p className="text-base text-muted-foreground max-w-md mx-auto leading-relaxed">
             {site.description}
@@ -107,13 +113,13 @@ export default function Home() {
             版本 v{APP_VERSION}
           </p>
           <a
-            href={site.url}
+            href={site.github}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
           >
-            <ExternalLink className="h-3.5 w-3.5" />
-            {site.domain}
+            <Github className="h-3.5 w-3.5" />
+            GitHub
           </a>
         </footer>
       </div>
