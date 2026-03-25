@@ -18,35 +18,19 @@ export function useChromeDownloader() {
   // Track active blob URLs so they can be revoked on re-download or unmount
   const blobUrlsRef = useRef<string[]>([]);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     return () => {
       blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+      abortControllerRef.current?.abort();
     };
   }, []);
 
   const onUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newUrl = e.target.value;
-    setExtensionUrl(newUrl);
-    
-    // 实时解析扩展ID
-    try {
-      const id = chromeService.extractExtensionId(newUrl);
-      if (id && chromeService.isValidExtensionId(id)) {
-        setExtensionInfo({
-          id,
-          name: "Chrome Extension",
-          version: "Unknown"
-        });
-      } else {
-        setExtensionInfo(null);
-      }
-    } catch {
-      setExtensionInfo(null);
-    }
-    
-    // 清除之前的下载链接
+    setExtensionUrl(e.target.value);
+    setExtensionInfo(null);
     setDownloadUrls({});
     setDownloadProgress(null);
   }, []);
@@ -95,7 +79,6 @@ export function useChromeDownloader() {
     setExtensionInfo({
       id: result.id,
       name: result.name,
-      version: "Unknown",
     });
     setSearchResults([]);
     setDownloadUrls({});
@@ -118,9 +101,13 @@ export function useChromeDownloader() {
           throw new Error("无效的扩展 ID");
         }
 
-        // 获取扩展信息
-        const info = await chromeService.getExtensionInfo(extensionId);
-        setExtensionInfo(info);
+        // 获取扩展详情，合并已有信息（如搜索结果中的名称）
+        const detail = await chromeService.getExtensionInfo(extensionId);
+        setExtensionInfo(prev => ({
+          ...prev,
+          ...detail,
+          name: detail.name || prev?.name,
+        }));
 
       } catch (error) {
         throw error;
@@ -131,11 +118,23 @@ export function useChromeDownloader() {
     [extensionUrl]
   );
 
+  const cancelDownload = useCallback(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setLoading(false);
+    setDownloadProgress(null);
+  }, []);
+
   const handleDownload = useCallback(async (format: 'crx' | 'zip' | 'both' = 'both') => {
     const info = extensionInfoRef.current;
     if (!info?.id) {
       throw new Error("请先解析扩展信息");
     }
+
+    // Abort any previous download
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setLoading(true);
     setDownloadProgress({
@@ -147,11 +146,10 @@ export function useChromeDownloader() {
 
     try {
       const downloadInfo = chromeService.getDownloadInfo(info.id);
-      
-      // 下载 CRX 文件
-      setDownloadProgress(prev => prev ? { ...prev, status: 'downloading' } : null);
-      
-      const response = await fetch(downloadInfo.downloadUrl);
+
+      const response = await fetch(downloadInfo.downloadUrl, {
+        signal: controller.signal,
+      });
       if (!response.ok) {
         let errorMessage = `下载失败: ${response.statusText}`;
         try {
@@ -161,7 +159,32 @@ export function useChromeDownloader() {
         throw new Error(errorMessage);
       }
 
-      const crxBlob = await response.blob();
+      // Stream reading for real progress
+      const contentLength = Number(response.headers.get('Content-Length') || 0);
+
+      let crxBlob: Blob;
+      if (response.body && contentLength > 0) {
+        const reader = response.body.getReader();
+        const chunks: BlobPart[] = [];
+        let received = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.length;
+          setDownloadProgress(prev => prev ? {
+            ...prev,
+            progress: Math.round((received / contentLength) * 90),
+            bytesDownloaded: received,
+            totalBytes: contentLength,
+          } : null);
+        }
+        crxBlob = new Blob(chunks, { type: 'application/x-chrome-extension' });
+      } else {
+        // Fallback: no content-length, show indeterminate
+        crxBlob = await response.blob();
+        setDownloadProgress(prev => prev ? { ...prev, progress: 90 } : null);
+      }
 
       // Revoke previous blob URLs before creating new ones
       blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
@@ -171,13 +194,13 @@ export function useChromeDownloader() {
       blobUrlsRef.current.push(crxUrl);
 
       const urls: {crx?: string; zip?: string} = {};
-      
+
       if (format === 'crx' || format === 'both') {
         urls.crx = crxUrl;
       }
 
       if (format === 'zip' || format === 'both') {
-        setDownloadProgress(prev => prev ? { ...prev, status: 'converting' } : null);
+        setDownloadProgress(prev => prev ? { ...prev, status: 'converting', progress: 95 } : null);
         try {
           const zipBlob = await chromeService.convertCrxToZip(crxBlob);
           const zipUrl = URL.createObjectURL(zipBlob);
@@ -194,6 +217,7 @@ export function useChromeDownloader() {
       setDownloadProgress(prev => prev ? { ...prev, status: 'completed', progress: 100 } : null);
 
     } catch (error) {
+      if (controller.signal.aborted) return;
       setDownloadProgress(prev => prev ? {
         ...prev,
         status: 'error',
@@ -201,6 +225,7 @@ export function useChromeDownloader() {
       } : null);
       throw error;
     } finally {
+      abortControllerRef.current = null;
       setLoading(false);
     }
   }, []);
@@ -217,5 +242,6 @@ export function useChromeDownloader() {
     selectSearchResult,
     handleSubmit,
     handleDownload,
+    cancelDownload,
   };
 }

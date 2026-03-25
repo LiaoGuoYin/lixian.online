@@ -31,25 +31,18 @@ class ChromeService {
     return `/api/chrome/download?id=${extensionId}`;
   }
 
-  // 获取扩展信息（通过 Chrome Web Store 页面）
+  // 获取扩展信息（通过 Chrome Web Store 页面代理）
   async getExtensionInfo(extensionId: string): Promise<ChromeExtensionInfo> {
     try {
-      // 这里可以通过抓取页面或调用API来获取扩展信息
-      // 由于CORS限制，在浏览器环境中直接抓取可能有问题
-      // 这里返回基本信息
+      const response = await get(`/api/chrome/detail?id=${extensionId}`, {});
+      const data = response.data;
       return {
         id: extensionId,
-        name: "Chrome Extension", // 占位符
-        version: "Unknown",
-        description: "Chrome Extension from Web Store"
+        name: data.name || undefined,
+        description: data.description || undefined,
       };
-    } catch (error) {
-      console.warn('获取扩展信息失败:', error);
-      return {
-        id: extensionId,
-        name: "Unknown Extension",
-        version: "Unknown"
-      };
+    } catch {
+      return { id: extensionId };
     }
   }
 

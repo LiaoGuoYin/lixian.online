@@ -13,6 +13,7 @@ import {
   Search,
   Loader2,
   ExternalLink,
+  X,
 } from "lucide-react";
 import { useChromeDownloader } from "../hooks/useChromeDownloader";
 
@@ -31,6 +32,7 @@ export default function ChromeDownloader() {
     selectSearchResult,
     handleSubmit,
     handleDownload,
+    cancelDownload,
   } = useChromeDownloader();
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -166,26 +168,26 @@ export default function ChromeDownloader() {
           <Card className="border border-border/60 bg-secondary/30">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center mt-0.5">
-                  <Info className="h-4 w-4 text-primary" />
-                </div>
                 <div className="text-sm space-y-1 min-w-0">
-                  <p className="font-medium text-foreground">
-                    {extensionInfo.name || "未知扩展"}
-                  </p>
+                  {extensionInfo.name && (
+                    <p className="font-medium text-foreground">
+                      {extensionInfo.name}
+                    </p>
+                  )}
+                  {extensionInfo.version &&
+                    extensionInfo.version !== "Unknown" && (
+                      <p className="text-muted-foreground">
+                        版本: {extensionInfo.version}
+                      </p>
+                    )}
+                  {extensionInfo.description && (
+                    <p className="text-muted-foreground line-clamp-2">
+                      描述：{extensionInfo.description}
+                    </p>
+                  )}
                   <p className="text-muted-foreground">
                     ID: {extensionInfo.id}
                   </p>
-                  {extensionInfo.version && (
-                    <p className="text-muted-foreground">
-                      版本: {extensionInfo.version}
-                    </p>
-                  )}
-                  {extensionInfo.description && (
-                    <p className="text-muted-foreground line-clamp-2">
-                      {extensionInfo.description}
-                    </p>
-                  )}
                 </div>
               </div>
             </CardContent>
@@ -230,16 +232,31 @@ export default function ChromeDownloader() {
         <Card className="border border-border/60 bg-secondary/30">
           <CardContent className="p-4 sm:p-5">
             <div className="space-y-3">
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between items-center text-sm">
                 <span className="text-foreground font-medium">
                   {downloadProgress.status === "downloading" && "下载中..."}
                   {downloadProgress.status === "converting" && "转换中..."}
                   {downloadProgress.status === "completed" && "下载完成"}
                   {downloadProgress.status === "error" && "下载出错"}
                 </span>
-                <span className="text-muted-foreground">
-                  {Math.round(downloadProgress.progress)}%
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground tabular-nums text-xs">
+                    {downloadProgress.totalBytes > 0
+                      ? `${(downloadProgress.bytesDownloaded / 1024 / 1024).toFixed(1)} / ${(downloadProgress.totalBytes / 1024 / 1024).toFixed(1)} MB`
+                      : `${Math.round(downloadProgress.progress)}%`}
+                  </span>
+                  {(downloadProgress.status === "downloading" ||
+                    downloadProgress.status === "converting") && (
+                    <button
+                      type="button"
+                      onClick={cancelDownload}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      title="取消下载"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
                 <div

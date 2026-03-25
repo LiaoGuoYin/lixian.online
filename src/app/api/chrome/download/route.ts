@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       nacl_arch: "x86-64",
       prod: "chromecrx",
       prodchannel: "beta",
-      prodversion: "91.0.4472.101",
+      prodversion: "131.0.6778.86",
       lang: "zh-CN",
       acceptformat: "crx2,crx3",
       x: `id=${extensionId}&installsource=ondemand&uc`
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(chromeUrl, {
       method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
       },
     });
 
@@ -55,6 +55,13 @@ export async function GET(request: NextRequest) {
     // 获取文件内容
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+
+    if (buffer.length === 0) {
+      return NextResponse.json(
+        { error: '未获取到扩展文件，该扩展可能已下架或不可用' },
+        { status: 404 }
+      );
+    }
 
     // 返回文件流，设置正确的 headers
     return new NextResponse(buffer, {
