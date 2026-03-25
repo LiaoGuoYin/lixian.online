@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/shared/ui/toaster";
+import { Analytics } from "@vercel/analytics/react";
 import { site } from "@/shared/lib/site";
 
 const inter = Inter({
@@ -35,6 +36,7 @@ export default function RootLayout({
           {children}
         </div>
         <Toaster />
+        <Analytics />
       </body>
     </html>
   );

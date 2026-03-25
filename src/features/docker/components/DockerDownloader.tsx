@@ -5,7 +5,14 @@ import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
-import { Download, Container, Info, Archive, Search, ExternalLink } from "lucide-react";
+import {
+  Download,
+  Container,
+  Info,
+  Archive,
+  Search,
+  ExternalLink,
+} from "lucide-react";
 import { useDockerDownloader } from "../hooks/useDockerDownloader";
 import { dockerService } from "../api/DockerService";
 
@@ -62,9 +69,10 @@ export default function DockerDownloader() {
     }
   };
 
-  const progressPercent = downloadProgress && downloadProgress.totalLayers > 0
-    ? (downloadProgress.layerIndex / downloadProgress.totalLayers) * 100
-    : 0;
+  const progressPercent =
+    downloadProgress && downloadProgress.totalLayers > 0
+      ? (downloadProgress.layerIndex / downloadProgress.totalLayers) * 100
+      : 0;
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
@@ -75,11 +83,23 @@ export default function DockerDownloader() {
           onChange={onImageUrlChange}
           history={history.items}
           onSelectHistory={(v) =>
-            onImageUrlChange({ target: { value: v } } as React.ChangeEvent<HTMLInputElement>)
+            onImageUrlChange({
+              target: { value: v },
+            } as React.ChangeEvent<HTMLInputElement>)
           }
         />
         <p className="text-xs text-muted-foreground">
-          输入镜像名称，如 nginx:latest
+          输入镜像名称，如 nginx:latest，可前往{" "}
+          <a
+            href="https://hub.docker.com/search"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 text-primary hover:underline"
+          >
+            Docker Hub
+            <ExternalLink className="h-3 w-3" />
+          </a>{" "}
+          搜索所需镜像（需魔法上网）
         </p>
         <div className="flex flex-wrap gap-2 mt-1">
           {[
@@ -89,7 +109,11 @@ export default function DockerDownloader() {
             <button
               key={example.label}
               type="button"
-              onClick={() => onImageUrlChange({ target: { value: example.value } } as React.ChangeEvent<HTMLInputElement>)}
+              onClick={() =>
+                onImageUrlChange({
+                  target: { value: example.value },
+                } as React.ChangeEvent<HTMLInputElement>)
+              }
               className="text-xs px-2.5 py-1 rounded-full bg-secondary/80 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
             >
               试试 {example.label}
@@ -125,11 +149,14 @@ export default function DockerDownloader() {
         <Card className="border border-destructive/30 bg-destructive/5">
           <CardContent className="p-5 space-y-3">
             <div className="text-sm text-destructive font-medium">
-              未找到对应镜像：{imageInfo.namespace || "library"}/{imageInfo.repository}
+              未找到对应镜像：{imageInfo.namespace || "library"}/
+              {imageInfo.repository}
             </div>
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <a
-                href={dockerService.getDockerHubSearchUrl(imageInfo.repository || imageUrl)}
+                href={dockerService.getDockerHubSearchUrl(
+                  imageInfo.repository || imageUrl,
+                )}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-primary hover:underline"
@@ -139,7 +166,10 @@ export default function DockerDownloader() {
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
               <a
-                href={dockerService.getDockerHubRepoUrl(imageInfo.namespace || "library", imageInfo.repository)}
+                href={dockerService.getDockerHubRepoUrl(
+                  imageInfo.namespace || "library",
+                  imageInfo.repository,
+                )}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-primary hover:underline"
@@ -150,12 +180,17 @@ export default function DockerDownloader() {
             </div>
             {searchCandidates.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">候选镜像（Top {searchCandidates.length}）</p>
+                <p className="text-xs text-muted-foreground">
+                  候选镜像（Top {searchCandidates.length}）
+                </p>
                 <div className="space-y-2">
                   {searchCandidates.map((candidate) => (
                     <a
                       key={`${candidate.namespace}/${candidate.repository}`}
-                      href={dockerService.getDockerHubRepoUrl(candidate.namespace, candidate.repository)}
+                      href={dockerService.getDockerHubRepoUrl(
+                        candidate.namespace,
+                        candidate.repository,
+                      )}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block rounded-md border border-border/60 p-3 hover:bg-secondary/60 transition-colors"
@@ -192,9 +227,15 @@ export default function DockerDownloader() {
                   <Info className="h-4 w-4 text-primary" />
                 </div>
                 <div className="text-sm space-y-1 min-w-0">
-                  <p className="font-medium text-foreground">{imageInfo.repository}</p>
-                  <p className="text-muted-foreground">仓库: {imageInfo.registry}</p>
-                  <p className="text-muted-foreground">命名空间: {imageInfo.namespace || 'library'}</p>
+                  <p className="font-medium text-foreground">
+                    {imageInfo.repository}
+                  </p>
+                  <p className="text-muted-foreground">
+                    仓库: {imageInfo.registry}
+                  </p>
+                  <p className="text-muted-foreground">
+                    命名空间: {imageInfo.namespace || "library"}
+                  </p>
                   <p className="text-muted-foreground">标签: {imageInfo.tag}</p>
                 </div>
               </div>
@@ -228,11 +269,15 @@ export default function DockerDownloader() {
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-foreground font-medium">
-                  {downloadProgress.status === 'downloading' ? '下载中...' :
-                   downloadProgress.status === 'completed' ? '下载完成' : '下载出错'}
+                  {downloadProgress.status === "downloading"
+                    ? "下载中..."
+                    : downloadProgress.status === "completed"
+                      ? "下载完成"
+                      : "下载出错"}
                 </span>
                 <span className="text-muted-foreground tabular-nums">
-                  {downloadProgress.layerIndex}/{downloadProgress.totalLayers} 层
+                  {downloadProgress.layerIndex}/{downloadProgress.totalLayers}{" "}
+                  层
                 </span>
               </div>
               <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
@@ -258,15 +303,26 @@ export default function DockerDownloader() {
                   <p className="text-sm font-medium text-foreground truncate">
                     {imageInfo?.repository}-{imageInfo?.tag}.tar
                   </p>
-                  <p className="text-xs text-muted-foreground">docker load 导入</p>
+                  <p className="text-xs text-muted-foreground">
+                    docker load 导入
+                  </p>
                 </div>
               </div>
               <a
                 href={downloadUrl}
-                download={imageInfo ? `${imageInfo.repository}-${imageInfo.tag}.tar` : 'docker-image.tar'}
+                download={
+                  imageInfo
+                    ? `${imageInfo.repository}-${imageInfo.tag}.tar`
+                    : "docker-image.tar"
+                }
                 className="flex-shrink-0 self-end sm:self-auto"
               >
-                <Button type="button" size="sm" variant="outline" className="gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                >
                   <Download className="h-3.5 w-3.5" />
                   下载
                 </Button>

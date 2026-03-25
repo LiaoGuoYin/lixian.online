@@ -4,7 +4,16 @@ import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
-import { Download, Globe, FileArchive, Package, Info, Search, Loader2 } from "lucide-react";
+import {
+  Download,
+  Globe,
+  FileArchive,
+  Package,
+  Info,
+  Search,
+  Loader2,
+  ExternalLink,
+} from "lucide-react";
 import { useChromeDownloader } from "../hooks/useChromeDownloader";
 
 export default function ChromeDownloader() {
@@ -36,13 +45,15 @@ export default function ChromeDownloader() {
       toast({
         title: "解析失败",
         description:
-          error instanceof Error ? error.message : "请检查扩展 URL 或 ID 是否正确",
+          error instanceof Error
+            ? error.message
+            : "请检查扩展 URL 或 ID 是否正确",
         variant: "destructive",
       });
     }
   };
 
-  const onDownload = async (format: 'crx' | 'zip' | 'both' = 'both') => {
+  const onDownload = async (format: "crx" | "zip" | "both" = "both") => {
     try {
       await handleDownload(format);
       toast({
@@ -68,11 +79,23 @@ export default function ChromeDownloader() {
           onChange={onUrlChange}
           history={history.items}
           onSelectHistory={(v) =>
-            onUrlChange({ target: { value: v } } as React.ChangeEvent<HTMLInputElement>)
+            onUrlChange({
+              target: { value: v },
+            } as React.ChangeEvent<HTMLInputElement>)
           }
         />
         <p className="text-xs text-muted-foreground">
-          输入关键词搜索 Chrome 扩展，或直接粘贴扩展 ID
+          输入关键词搜索 Chrome 扩展，或直接粘贴扩展 ID，也可前往{" "}
+          <a
+            href="https://chromewebstore.google.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 text-primary hover:underline"
+          >
+            Chrome 应用商店
+            <ExternalLink className="h-3 w-3" />
+          </a>{" "}
+          浏览并复制扩展 ID（需魔法上网）
         </p>
         {searching && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -93,20 +116,32 @@ export default function ChromeDownloader() {
               >
                 <Search className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                 <span className="truncate">{result.name}</span>
-                <span className="text-xs text-muted-foreground ml-auto flex-shrink-0">{result.id.slice(0, 8)}…</span>
+                <span className="text-xs text-muted-foreground ml-auto flex-shrink-0">
+                  {result.id.slice(0, 8)}…
+                </span>
               </button>
             ))}
           </div>
         )}
         <div className="flex flex-wrap gap-2 mt-1">
           {[
-            { label: "uBlock Origin", value: "cjpalhdlnbpafiamejdnhcphjbkeiagm" },
-            { label: "React DevTools", value: "fmkadmapgofadopljbjfkapdkoienihi" },
+            {
+              label: "uBlock Origin",
+              value: "cjpalhdlnbpafiamejdnhcphjbkeiagm",
+            },
+            {
+              label: "React DevTools",
+              value: "fmkadmapgofadopljbjfkapdkoienihi",
+            },
           ].map((example) => (
             <button
               key={example.label}
               type="button"
-              onClick={() => onUrlChange({ target: { value: example.value } } as React.ChangeEvent<HTMLInputElement>)}
+              onClick={() =>
+                onUrlChange({
+                  target: { value: example.value },
+                } as React.ChangeEvent<HTMLInputElement>)
+              }
               className="text-xs px-2.5 py-1 rounded-full bg-secondary/80 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
             >
               试试 {example.label}
@@ -139,13 +174,21 @@ export default function ChromeDownloader() {
                   <Info className="h-4 w-4 text-primary" />
                 </div>
                 <div className="text-sm space-y-1 min-w-0">
-                  <p className="font-medium text-foreground">{extensionInfo.name || '未知扩展'}</p>
-                  <p className="text-muted-foreground">ID: {extensionInfo.id}</p>
+                  <p className="font-medium text-foreground">
+                    {extensionInfo.name || "未知扩展"}
+                  </p>
+                  <p className="text-muted-foreground">
+                    ID: {extensionInfo.id}
+                  </p>
                   {extensionInfo.version && (
-                    <p className="text-muted-foreground">版本: {extensionInfo.version}</p>
+                    <p className="text-muted-foreground">
+                      版本: {extensionInfo.version}
+                    </p>
                   )}
                   {extensionInfo.description && (
-                    <p className="text-muted-foreground line-clamp-2">{extensionInfo.description}</p>
+                    <p className="text-muted-foreground line-clamp-2">
+                      {extensionInfo.description}
+                    </p>
                   )}
                 </div>
               </div>
@@ -156,7 +199,7 @@ export default function ChromeDownloader() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
             <Button
               type="button"
-              onClick={() => onDownload('crx')}
+              onClick={() => onDownload("crx")}
               disabled={loading}
               variant="outline"
               className="gap-1.5"
@@ -166,7 +209,7 @@ export default function ChromeDownloader() {
             </Button>
             <Button
               type="button"
-              onClick={() => onDownload('zip')}
+              onClick={() => onDownload("zip")}
               disabled={loading}
               variant="outline"
               className="gap-1.5"
@@ -176,7 +219,7 @@ export default function ChromeDownloader() {
             </Button>
             <Button
               type="button"
-              onClick={() => onDownload('both')}
+              onClick={() => onDownload("both")}
               disabled={loading}
               className="gap-1.5"
             >
@@ -193,12 +236,14 @@ export default function ChromeDownloader() {
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-foreground font-medium">
-                  {downloadProgress.status === 'downloading' && '下载中...'}
-                  {downloadProgress.status === 'converting' && '转换中...'}
-                  {downloadProgress.status === 'completed' && '下载完成'}
-                  {downloadProgress.status === 'error' && '下载出错'}
+                  {downloadProgress.status === "downloading" && "下载中..."}
+                  {downloadProgress.status === "converting" && "转换中..."}
+                  {downloadProgress.status === "completed" && "下载完成"}
+                  {downloadProgress.status === "error" && "下载出错"}
                 </span>
-                <span className="text-muted-foreground">{Math.round(downloadProgress.progress)}%</span>
+                <span className="text-muted-foreground">
+                  {Math.round(downloadProgress.progress)}%
+                </span>
               </div>
               <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
                 <div
@@ -207,7 +252,9 @@ export default function ChromeDownloader() {
                 />
               </div>
               {downloadProgress.error && (
-                <p className="text-xs text-destructive">{downloadProgress.error}</p>
+                <p className="text-xs text-destructive">
+                  {downloadProgress.error}
+                </p>
               )}
             </div>
           </CardContent>
@@ -224,19 +271,34 @@ export default function ChromeDownloader() {
                     <Package className="h-4 w-4 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{extensionInfo?.id}.crx</p>
-                    <p className="text-xs text-muted-foreground">Chrome 原生扩展格式</p>
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {extensionInfo?.id}.crx
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Chrome 原生扩展格式
+                    </p>
                   </div>
                 </div>
-                <a href={downloadUrls.crx} download={`${extensionInfo?.id}.crx`} className="flex-shrink-0 self-end sm:self-auto">
-                  <Button type="button" size="sm" variant="outline" className="gap-1.5">
+                <a
+                  href={downloadUrls.crx}
+                  download={`${extensionInfo?.id}.crx`}
+                  className="flex-shrink-0 self-end sm:self-auto"
+                >
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                  >
                     <Download className="h-3.5 w-3.5" />
                     下载
                   </Button>
                 </a>
               </div>
             )}
-            {downloadUrls.crx && downloadUrls.zip && <div className="border-t border-border/40" />}
+            {downloadUrls.crx && downloadUrls.zip && (
+              <div className="border-t border-border/40" />
+            )}
             {downloadUrls.zip && (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -244,12 +306,25 @@ export default function ChromeDownloader() {
                     <FileArchive className="h-4 w-4 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{extensionInfo?.id}.zip</p>
-                    <p className="text-xs text-muted-foreground">解压后可查看源码</p>
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {extensionInfo?.id}.zip
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      解压后可查看源码
+                    </p>
                   </div>
                 </div>
-                <a href={downloadUrls.zip} download={`${extensionInfo?.id}.zip`} className="flex-shrink-0 self-end sm:self-auto">
-                  <Button type="button" size="sm" variant="outline" className="gap-1.5">
+                <a
+                  href={downloadUrls.zip}
+                  download={`${extensionInfo?.id}.zip`}
+                  className="flex-shrink-0 self-end sm:self-auto"
+                >
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                  >
                     <Download className="h-3.5 w-3.5" />
                     下载
                   </Button>

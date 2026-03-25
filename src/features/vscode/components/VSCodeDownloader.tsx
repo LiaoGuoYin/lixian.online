@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
 import { Card, CardContent } from "@/shared/ui/card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
-import { Download, Link as LinkIcon, Package } from "lucide-react";
+import { Download, Link as LinkIcon, Package, ExternalLink } from "lucide-react";
 import { useVSCodeDownloader } from "../hooks/useVSCodeDownloader";
 
 export default function VSCodeDownloader() {
@@ -53,7 +53,17 @@ export default function VSCodeDownloader() {
           }
         />
         <p className="text-xs text-muted-foreground">
-          粘贴 VSCode 插件页面链接
+          粘贴 VSCode 插件页面链接，可前往{" "}
+          <a
+            href="https://marketplace.visualstudio.com/vscode"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 text-primary hover:underline"
+          >
+            VSCode Marketplace
+            <ExternalLink className="h-3 w-3" />
+          </a>{" "}
+          搜索所需插件并复制链接（大陆可直接访问）
         </p>
         <div className="flex flex-wrap gap-2 mt-1">
           {[
