@@ -16,7 +16,9 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   webServer: {
-    command: "pnpm dev:e2e",
+    command: process.env.CI
+      ? `pnpm build && pnpm start --hostname 127.0.0.1 --port ${PORT}`
+      : "pnpm dev:e2e",
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
