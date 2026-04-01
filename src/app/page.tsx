@@ -65,6 +65,7 @@ export default function Home() {
                 <TabsList className="grid w-full grid-cols-3 bg-secondary/60 backdrop-blur-sm rounded-apple p-1 border border-border/40 h-10 sm:h-12">
                   <TabsTrigger
                     value="vscode"
+                    data-testid="tab-vscode"
                     className="rounded-apple-sm font-medium text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-1.5 sm:gap-2"
                   >
                     <Blocks className="h-4 w-4 flex-shrink-0" />
@@ -73,6 +74,7 @@ export default function Home() {
                   </TabsTrigger>
                   <TabsTrigger
                     value="chrome"
+                    data-testid="tab-chrome"
                     className="rounded-apple-sm font-medium text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-1.5 sm:gap-2"
                   >
                     <Globe className="h-4 w-4 flex-shrink-0" />
@@ -80,6 +82,7 @@ export default function Home() {
                   </TabsTrigger>
                   <TabsTrigger
                     value="docker"
+                    data-testid="tab-docker"
                     className="rounded-apple-sm font-medium text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-4 data-[state=active]:bg-background data-[state=active]:shadow-apple-button data-[state=active]:text-foreground transition-all duration-200 gap-1.5 sm:gap-2"
                   >
                     <Container className="h-4 w-4 flex-shrink-0" />

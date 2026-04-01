@@ -85,6 +85,7 @@ export default function ChromeDownloader() {
           </a>{" "}
         </p>
         <InputWithHistory
+          data-testid="chrome-input"
           placeholder="扩展名称、ID 或商店链接"
           value={extensionUrl}
           onChange={onUrlChange}
@@ -148,7 +149,12 @@ export default function ChromeDownloader() {
         </div>
       </div>
 
-      <Button type="submit" disabled={loading} className="w-full">
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full"
+        data-testid="chrome-submit"
+      >
         {loading ? (
           <span className="flex items-center justify-center gap-2">
             <LoadingSpinner />
@@ -201,6 +207,7 @@ export default function ChromeDownloader() {
               disabled={loading}
               variant="outline"
               className="gap-1.5"
+              data-testid="chrome-download-crx"
             >
               <Download className="h-4 w-4" />
               CRX
@@ -211,6 +218,7 @@ export default function ChromeDownloader() {
               disabled={loading}
               variant="outline"
               className="gap-1.5"
+              data-testid="chrome-download-zip"
             >
               <FileArchive className="h-4 w-4" />
               ZIP
@@ -220,6 +228,7 @@ export default function ChromeDownloader() {
               onClick={() => onDownload("both")}
               disabled={loading}
               className="gap-1.5"
+              data-testid="chrome-download-both"
             >
               <Download className="h-4 w-4" />
               全部下载
@@ -296,6 +305,7 @@ export default function ChromeDownloader() {
                   href={downloadUrls.crx}
                   download={`${extensionInfo?.id}.crx`}
                   className="flex-shrink-0 self-end sm:self-auto"
+                  data-testid="chrome-download-crx-link"
                 >
                   <Button
                     type="button"
@@ -331,6 +341,7 @@ export default function ChromeDownloader() {
                   href={downloadUrls.zip}
                   download={`${extensionInfo?.id}.zip`}
                   className="flex-shrink-0 self-end sm:self-auto"
+                  data-testid="chrome-download-zip-link"
                 >
                   <Button
                     type="button"

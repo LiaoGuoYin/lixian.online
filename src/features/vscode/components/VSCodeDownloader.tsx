@@ -60,6 +60,7 @@ export default function VSCodeDownloader() {
           </a>
         </p>
         <InputWithHistory
+          data-testid="vscode-input"
           placeholder="marketplace.visualstudio.com/items?itemName=..."
           value={url}
           onChange={onUrlChange}
@@ -99,7 +100,12 @@ export default function VSCodeDownloader() {
         </div>
       </div>
 
-      <Button type="submit" disabled={loading} className="w-full">
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full"
+        data-testid="vscode-submit"
+      >
         {loading ? (
           <span className="flex items-center justify-center gap-2">
             <LoadingSpinner />
@@ -144,6 +150,7 @@ export default function VSCodeDownloader() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-shrink-0 self-end sm:self-auto"
+                data-testid="vscode-download-link"
               >
                 <Button
                   type="button"
