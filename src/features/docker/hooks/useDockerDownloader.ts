@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { dockerService } from "../api/DockerService";
-import { DockerImageInfo, DockerDownloadProgress, DockerSearchCandidate } from "../types";
+import { DockerImageInfo, DockerManifest, DockerDownloadProgress, DockerSearchCandidate } from "../types";
 import { get } from "@/shared/lib/http";
 
 const IMAGE_NOT_FOUND_MESSAGE = "未找到对应镜像，请检查名称或从候选镜像中选择";
@@ -14,6 +14,9 @@ export function useDockerDownloader() {
   const [downloadUrl, setDownloadUrl] = useState("");
   const [searchCandidates, setSearchCandidates] = useState<DockerSearchCandidate[]>([]);
   const [imageNotFound, setImageNotFound] = useState(false);
+  const [manifest, setManifest] = useState<DockerManifest | null>(null);
+  const [manifestLoading, setManifestLoading] = useState(false);
+  const manifestRef = useRef<DockerManifest | null>(null);
 
   // Keep a ref to imageInfo so download callbacks are stable
   const imageInfoRef = useRef(imageInfo);
@@ -28,6 +31,22 @@ export function useDockerDownloader() {
     };
   }, []);
 
+  const fetchManifest = useCallback(async (info: DockerImageInfo) => {
+    if (!info.repository || !info.tag) return;
+    setManifestLoading(true);
+    setManifest(null);
+    manifestRef.current = null;
+    try {
+      const m = await dockerService.getManifest(info);
+      setManifest(m);
+      manifestRef.current = m;
+    } catch (error) {
+      console.warn('获取清单失败:', error);
+    } finally {
+      setManifestLoading(false);
+    }
+  }, []);
+
   const onImageUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newUrl = e.target.value;
     setImageUrl(newUrl);
@@ -36,13 +55,17 @@ export function useDockerDownloader() {
     setDownloadUrl("");
     setImageNotFound(false);
     setSearchCandidates([]);
+    setManifest(null);
+    manifestRef.current = null;
   }, []);
 
   const onTagChange = useCallback(
     (value: string) => {
-      setImageInfo((prev) => (prev ? { ...prev, tag: value } : null));
+      const updated = imageInfoRef.current ? { ...imageInfoRef.current, tag: value } : null;
+      setImageInfo(updated);
+      if (updated) fetchManifest(updated);
     },
-    []
+    [fetchManifest]
   );
 
   const handleImageNotFound = useCallback(async (searchKeyword: string) => {
@@ -77,11 +100,13 @@ export function useDockerDownloader() {
           }
 
           setTagList(tags);
-          
+
           // 如果当前没有选择tag，自动选择第一个
-          if (!extracted.tag && tags.length > 0) {
-            setImageInfo({ ...extracted, tag: tags[0] });
-          }
+          const finalInfo = extracted.tag ? extracted : { ...extracted, tag: tags[0] };
+          setImageInfo(finalInfo);
+
+          // 预取 manifest 以展示各层大小
+          fetchManifest(finalInfo);
         }
       } catch (error) {
         const axiosError = error as { response?: { status?: number } };
@@ -95,7 +120,7 @@ export function useDockerDownloader() {
         setLoading(false);
       }
     },
-    [handleImageNotFound, imageUrl, tagList]
+    [fetchManifest, handleImageNotFound, imageUrl, tagList]
   );
 
   const handleDownload = useCallback(async () => {
@@ -109,14 +134,15 @@ export function useDockerDownloader() {
       layerIndex: 0,
       totalLayers: 0,
       currentLayerSize: 0,
+      currentLayerDownloaded: 0,
       downloadedSize: 0,
       totalSize: 0,
       status: 'downloading'
     });
 
     try {
-      // 获取镜像清单
-      const manifest = await dockerService.getManifest(info);
+      // 复用已预取的 manifest，否则重新获取
+      const manifest = manifestRef.current ?? await dockerService.getManifest(info);
 
       // 容错处理：检查 manifest 结构
       const layers = manifest?.layers || [];
@@ -133,11 +159,7 @@ export function useDockerDownloader() {
       const downloadedLayers: Blob[] = [];
       let downloadedSize = 0;
 
-      // 获取认证令牌用于下载层
       const namespace = info.namespace || 'library';
-      const authUrl = `/api/docker/auth?namespace=${namespace}&repository=${info.repository}`;
-      const authResponse = await get(authUrl, {});
-      const token = authResponse.data.token;
 
       for (let i = 0; i < layers.length; i++) {
         const layer = layers[i];
@@ -145,14 +167,25 @@ export function useDockerDownloader() {
 
         setDownloadProgress(prev => prev ? {
           ...prev,
-          layerIndex: i + 1, // 转换为基于1的索引
+          layerIndex: i + 1,
           currentLayerSize: layer.size || 0,
+          currentLayerDownloaded: 0,
           downloadedSize
         } : null);
 
         try {
+          // 每层下载前重新获取 token，避免大层下载耗时导致 token 过期（默认 300s）
+          const authUrl = `/api/docker/auth?namespace=${namespace}&repository=${info.repository}`;
+          const authResponse = await get(authUrl, {});
+          const token = authResponse.data.token;
+
           console.log(`开始下载层 ${i + 1}/${layers.length}: ${layer.digest}`);
-          const layerBlob = await dockerService.downloadLayer(info, layer.digest, token);
+          const layerBlob = await dockerService.downloadLayer(info, layer.digest, token, (bytes) => {
+            setDownloadProgress(prev => prev ? {
+              ...prev,
+              currentLayerDownloaded: bytes,
+            } : null);
+          });
           console.log(`层 ${i + 1} 下载完成，大小: ${layerBlob.size} bytes`);
 
           downloadedLayers.push(layerBlob);
@@ -160,18 +193,21 @@ export function useDockerDownloader() {
 
           setDownloadProgress(prev => prev ? {
             ...prev,
-            layerIndex: i + 1, // 确保显示当前完成的层数
-            downloadedSize
+            downloadedSize,
+            currentLayerDownloaded: 0,
           } : null);
         } catch (error) {
           console.error(`下载层 ${layer.digest} 失败:`, error);
-          // 不要静默忽略错误，抛出错误让用户知道
           throw new Error(`下载层失败: ${error}`);
         }
       }
 
+      setDownloadProgress(prev => prev ? {
+        ...prev,
+        status: 'packing'
+      } : null);
+
       console.log('开始生成 TAR 文件，下载的层数:', downloadedLayers.length);
-      console.log('层大小信息:', downloadedLayers.map((layer, i) => ({ index: i, size: layer.size })));
 
       // 生成 Docker Load TAR 文件
       const blob = await dockerService.generateDockerLoadTar(manifest, downloadedLayers, info);
@@ -205,6 +241,8 @@ export function useDockerDownloader() {
     downloadProgress,
     downloadUrl,
     loading,
+    manifest,
+    manifestLoading,
     imageNotFound,
     searchCandidates,
     onImageUrlChange,

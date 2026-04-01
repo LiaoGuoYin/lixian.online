@@ -172,19 +172,41 @@ class DockerService {
     }
   }
 
-  async downloadLayer(imageInfo: DockerImageInfo, digest: string, token: string): Promise<Blob> {
+  async downloadLayer(
+    imageInfo: DockerImageInfo,
+    digest: string,
+    token: string,
+    onProgress?: (downloaded: number) => void,
+  ): Promise<Blob> {
     const namespace = imageInfo.namespace || 'library';
-    
+
     // 使用代理 API 避免 CORS 问题
     const layerUrl = `/api/docker/layer?namespace=${namespace}&repository=${imageInfo.repository}&digest=${digest}&token=${encodeURIComponent(token)}`;
-    
+
     const response = await fetch(layerUrl);
-    
+
     if (!response.ok) {
       throw new Error(`下载层失败: ${response.statusText}`);
     }
-    
-    return response.blob();
+
+    if (!onProgress || !response.body) {
+      return response.blob();
+    }
+
+    // Stream read to report byte-level progress
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let downloaded = 0;
+
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      downloaded += value.length;
+      onProgress(downloaded);
+    }
+
+    return new Blob(chunks);
   }
 
   async generateDockerLoadTar(manifest: DockerManifest, layers: Blob[], imageInfo: DockerImageInfo): Promise<Blob> {
@@ -232,8 +254,8 @@ class DockerService {
     for (let i = 0; i < layers.length && i < manifestLayers.length; i++) {
       const layerInfo = manifestLayers[i];
       const layerId = this.generateLayerId(layerInfo.digest);
-      console.log(`解压层 ${i + 1}/${layers.length}: ${layerId}`);
-      const { data, sha256 } = await this.decompressAndHash(layers[i]);
+      console.log(`解压层 ${i + 1}/${layers.length}: ${layerId} (${layerInfo.mediaType})`);
+      const { data, sha256 } = await this.decompressAndHash(layers[i], layerInfo.mediaType);
       processed.push({ data, diffId: sha256, layerId });
     }
 
@@ -294,28 +316,50 @@ class DockerService {
     }
   }
 
-  // Decompress a gzip blob and return decompressed bytes + its SHA256
-  private async decompressAndHash(blob: Blob): Promise<{ data: Uint8Array; sha256: string }> {
-    const ds = new DecompressionStream('gzip');
-    const writer = ds.writable.getWriter();
-    const reader = ds.readable.getReader();
+  // Decompress a layer blob (gzip / uncompressed) and return the raw bytes + SHA256.
+  // Detection is based on magic bytes so it works even when mediaType is absent or incorrect.
+  private async decompressAndHash(blob: Blob, mediaType?: string): Promise<{ data: Uint8Array; sha256: string }> {
+    const raw = new Uint8Array(await blob.arrayBuffer());
 
-    writer.write(new Uint8Array(await blob.arrayBuffer()));
-    writer.close();
+    // Magic bytes:
+    //   gzip  → 0x1F 0x8B
+    //   zstd  → 0x28 0xB5 0x2F 0xFD
+    const isGzip = raw.length >= 2 && raw[0] === 0x1f && raw[1] === 0x8b;
+    const isZstd = raw.length >= 4 && raw[0] === 0x28 && raw[1] === 0xb5 && raw[2] === 0x2f && raw[3] === 0xfd;
 
-    const chunks: Uint8Array[] = [];
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-    }
+    let result: Uint8Array;
 
-    const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
-    const result = new Uint8Array(totalLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-      result.set(chunk, offset);
-      offset += chunk.length;
+    if (isGzip) {
+      const ds = new DecompressionStream('gzip');
+      const writer = ds.writable.getWriter();
+      const reader = ds.readable.getReader();
+
+      writer.write(raw);
+      writer.close();
+
+      const chunks: Uint8Array[] = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+      }
+
+      const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
+      result = new Uint8Array(totalLength);
+      let offset = 0;
+      for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+      }
+    } else if (isZstd) {
+      // zstd 浏览器原生不支持，需要 JS 库，暂时直接报错提示
+      throw new Error(
+        `该镜像层使用 zstd 压缩 (${mediaType ?? 'unknown'})，当前版本暂不支持。请尝试下载其他架构或标签。`
+      );
+    } else {
+      // 未压缩（如原始 GGUF 模型文件、许可证文本等），直接使用原始数据
+      console.log(`层未压缩或格式未知 (mediaType: ${mediaType ?? 'unknown'})，按原始数据处理`);
+      result = raw;
     }
 
     const hashBuf = await crypto.subtle.digest('SHA-256', result);

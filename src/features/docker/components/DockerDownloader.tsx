@@ -12,9 +12,18 @@ import {
   Archive,
   Search,
   ExternalLink,
+  Layers,
 } from "lucide-react";
 import { useDockerDownloader } from "../hooks/useDockerDownloader";
 import { dockerService } from "../api/DockerService";
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / Math.pow(1024, i);
+  return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
 
 export default function DockerDownloader() {
   const { toast } = useToast();
@@ -26,6 +35,8 @@ export default function DockerDownloader() {
     downloadProgress,
     downloadUrl,
     loading,
+    manifest,
+    manifestLoading,
     imageNotFound,
     searchCandidates,
     onImageUrlChange,
@@ -68,8 +79,8 @@ export default function DockerDownloader() {
   };
 
   const progressPercent =
-    downloadProgress && downloadProgress.totalLayers > 0
-      ? (downloadProgress.layerIndex / downloadProgress.totalLayers) * 100
+    downloadProgress && downloadProgress.totalSize > 0
+      ? ((downloadProgress.downloadedSize + downloadProgress.currentLayerDownloaded) / downloadProgress.totalSize) * 100
       : 0;
 
   return (
@@ -88,6 +99,7 @@ export default function DockerDownloader() {
           </a>
         </p>
         <InputWithHistory
+          data-testid="docker-input"
           placeholder="nginx:latest 或 hub.docker.com/r/library/nginx"
           value={imageUrl}
           onChange={onImageUrlChange}
@@ -119,7 +131,12 @@ export default function DockerDownloader() {
         </div>
       </div>
 
-      <Button type="submit" disabled={loading} className="w-full">
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full"
+        data-testid="docker-submit"
+      >
         {loading ? (
           <span className="flex items-center justify-center gap-2">
             <LoadingSpinner />
@@ -239,11 +256,57 @@ export default function DockerDownloader() {
             </CardContent>
           </Card>
 
+          {/* Layer sizes */}
+          {manifestLoading && (
+            <Card className="border border-border/60 bg-secondary/30">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <LoadingSpinner />
+                  获取层信息...
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {manifest && manifest.layers.length > 0 && (
+            <Card className="border border-border/60 bg-secondary/30">
+              <CardContent className="p-4 sm:p-5 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Layers className="h-4 w-4 text-primary" />
+                  镜像层（{manifest.layers.length} 层）
+                </div>
+                <div className="space-y-1.5">
+                  {manifest.layers.map((layer, i) => (
+                    <div
+                      key={layer.digest}
+                      className="flex items-center justify-between text-xs text-muted-foreground"
+                    >
+                      <span className="font-mono truncate mr-3">
+                        {i + 1}. {layer.digest.slice(7, 19)}...
+                      </span>
+                      <span className="tabular-nums flex-shrink-0">
+                        {formatBytes(layer.size)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between text-sm font-medium text-foreground border-t border-border/60 pt-2">
+                  <span>总计（压缩）</span>
+                  <span className="tabular-nums">
+                    {formatBytes(
+                      manifest.layers.reduce((s, l) => s + l.size, 0)
+                    )}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Button
             type="button"
             onClick={onDownload}
             disabled={loading}
             className="w-full"
+            data-testid="docker-download"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -267,22 +330,30 @@ export default function DockerDownloader() {
               <div className="flex justify-between text-sm">
                 <span className="text-foreground font-medium">
                   {downloadProgress.status === "downloading"
-                    ? "下载中..."
-                    : downloadProgress.status === "completed"
-                      ? "下载完成"
-                      : "下载出错"}
+                    ? `下载中... 第 ${downloadProgress.layerIndex}/${downloadProgress.totalLayers} 层`
+                    : downloadProgress.status === "packing"
+                      ? "打包中..."
+                      : downloadProgress.status === "completed"
+                        ? "下载完成"
+                        : "下载出错"}
                 </span>
-                <span className="text-muted-foreground tabular-nums">
-                  {downloadProgress.layerIndex}/{downloadProgress.totalLayers}{" "}
-                  层
-                </span>
+                {downloadProgress.status === "downloading" && downloadProgress.totalSize > 0 && (
+                  <span className="text-muted-foreground tabular-nums">
+                    {formatBytes(downloadProgress.downloadedSize + downloadProgress.currentLayerDownloaded)} / {formatBytes(downloadProgress.totalSize)}
+                  </span>
+                )}
               </div>
               <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
                 <div
-                  className="bg-primary h-full rounded-full transition-all duration-300 ease-out"
-                  style={{ width: `${progressPercent}%` }}
+                  className="bg-primary h-full rounded-full transition-all duration-150 ease-out"
+                  style={{ width: `${Math.min(progressPercent, 100)}%` }}
                 />
               </div>
+              {downloadProgress.status === "downloading" && downloadProgress.currentLayerSize > 0 && (
+                <div className="text-xs text-muted-foreground tabular-nums">
+                  当前层: {formatBytes(downloadProgress.currentLayerDownloaded)} / {formatBytes(downloadProgress.currentLayerSize)}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -313,6 +384,7 @@ export default function DockerDownloader() {
                     : "docker-image.tar"
                 }
                 className="flex-shrink-0 self-end sm:self-auto"
+                data-testid="docker-download-link"
               >
                 <Button
                   type="button"

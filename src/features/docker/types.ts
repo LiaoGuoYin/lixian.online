@@ -37,7 +37,8 @@ export interface DockerDownloadProgress {
   layerIndex: number;
   totalLayers: number;
   currentLayerSize: number;
+  currentLayerDownloaded: number;
   downloadedSize: number;
   totalSize: number;
-  status: 'downloading' | 'completed' | 'error';
+  status: 'downloading' | 'packing' | 'completed' | 'error';
 }

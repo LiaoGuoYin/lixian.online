@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Cache-Control': 'public, max-age=1800', // 缓存30分钟
+        'Cache-Control': 'no-store', // token 有效期短（300s），不缓存以确保每次获取新 token
       },
     });
 
