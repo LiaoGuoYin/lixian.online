@@ -13,6 +13,10 @@ const emptyZipBuffer = Buffer.from(
 
 const dockerLayerGzip = gzipSync(Buffer.alloc(1024));
 
+type MockDockerOptions = {
+  includeInvalidLayer?: boolean;
+};
+
 function fulfillJson(route: Route, data: unknown, status = 200) {
   return route.fulfill({
     status,
@@ -62,7 +66,7 @@ export async function mockChromeApis(page: Page) {
   });
 }
 
-export async function mockDockerApis(page: Page) {
+export async function mockDockerApis(page: Page, options: MockDockerOptions = {}) {
   await page.route("**/api/docker/tags**", async (route) => {
     await fulfillJson(route, {
       results: [{ name: "latest" }, { name: "alpine" }],
@@ -76,6 +80,18 @@ export async function mockDockerApis(page: Page) {
   });
 
   await page.route("**/api/docker/manifest**", async (route) => {
+    const layers = [
+      {
+        mediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
+        size: dockerLayerGzip.length,
+        digest: `sha256:${"a".repeat(64)}`,
+      },
+    ];
+
+    if (options.includeInvalidLayer) {
+      layers.unshift(undefined as never);
+    }
+
     await fulfillJson(route, {
       schemaVersion: 2,
       mediaType: "application/vnd.docker.distribution.manifest.v2+json",
@@ -84,13 +100,7 @@ export async function mockDockerApis(page: Page) {
         size: 7023,
         digest: `sha256:${"b".repeat(64)}`,
       },
-      layers: [
-        {
-          mediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
-          size: dockerLayerGzip.length,
-          digest: `sha256:${"a".repeat(64)}`,
-        },
-      ],
+      layers,
     });
   });
 

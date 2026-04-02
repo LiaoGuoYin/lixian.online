@@ -82,6 +82,26 @@ test("Docker flow prepares a docker load tarball", async ({ page }) => {
   );
 });
 
+test("Docker flow tolerates invalid manifest layers", async ({ page }) => {
+  await mockDockerApis(page, { includeInvalidLayer: true });
+
+  await page.goto("/");
+  await page.getByTestId("tab-docker").click();
+
+  await page.getByTestId("docker-input").fill(dockerImage);
+  await page.getByTestId("docker-submit").click();
+
+  await expect(page.getByText("标签: latest")).toBeVisible();
+  await expect(page.getByText("镜像层（1 层）")).toBeVisible();
+
+  await page.getByTestId("docker-download").click();
+
+  await expect(page.getByTestId("docker-download-link")).toHaveAttribute(
+    "download",
+    "nginx-latest.tar",
+  );
+});
+
 test("VSCode history survives a page reload", async ({ page }) => {
   await mockVsCodeApi(page);
 

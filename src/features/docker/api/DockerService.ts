@@ -5,6 +5,12 @@ import { TarBuilder } from "@/features/docker/utils/tarBuilder";
 class DockerService {
   private readonly dockerHubBaseUrl = "https://hub.docker.com";
 
+  private isValidLayer(
+    layer: DockerManifest["layers"][number] | null | undefined,
+  ): layer is DockerManifest["layers"][number] {
+    return Boolean(layer && typeof layer.digest === "string" && layer.digest);
+  }
+
   extractImageInfo(imageUrl: string): DockerImageInfo {
     if (!imageUrl) {
       return { registry: "", namespace: "", repository: "", tag: "" };
@@ -152,6 +158,25 @@ class DockerService {
       }
       
       // 确保基本结构存在
+      const normalizedLayers = Array.isArray(manifest.layers)
+        ? manifest.layers
+            .filter((layer: DockerManifest["layers"][number] | null | undefined) =>
+              this.isValidLayer(layer),
+            )
+            .map((layer: DockerManifest["layers"][number]) => ({
+              mediaType: layer.mediaType || 'application/octet-stream',
+              size: Number(layer.size) || 0,
+              digest: layer.digest,
+            }))
+        : [];
+
+      if (Array.isArray(manifest.layers) && normalizedLayers.length !== manifest.layers.length) {
+        console.warn('Docker manifest 包含无效层描述，已在客户端过滤', {
+          originalLayerCount: manifest.layers.length,
+          normalizedLayerCount: normalizedLayers.length,
+        });
+      }
+
       const normalizedManifest: DockerManifest = {
         schemaVersion: manifest.schemaVersion || 2,
         mediaType: manifest.mediaType || 'application/vnd.docker.distribution.manifest.v2+json',
@@ -160,7 +185,7 @@ class DockerService {
           size: 0,
           digest: ''
         },
-        layers: manifest.layers || []
+        layers: normalizedLayers
       };
       
       console.log('Normalized Manifest:', normalizedManifest);
@@ -243,7 +268,7 @@ class DockerService {
     const fullImageName = namespace ? `${namespace}/${imageInfo.repository}` : imageInfo.repository;
     const imageTag = `${fullImageName}:${imageInfo.tag}`;
     const imageId = this.generateImageId(imageTag);
-    const manifestLayers = manifest.layers ?? [];
+    const manifestLayers = (manifest.layers ?? []).filter((layer) => this.isValidLayer(layer));
 
     // Step 1: decompress each layer and compute its uncompressed SHA256.
     // docker load verifies diff_ids against the SHA256 of the *decompressed* layer tar,
