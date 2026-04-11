@@ -4,7 +4,11 @@ import {
   dockerImage,
   mockChromeApis,
   mockDockerApis,
+  mockMsStoreApi,
   mockVsCodeApi,
+  msstoreDownloadUrl,
+  msstoreProductId,
+  msstoreProductUrl,
   vscodeExtensionUrl,
 } from "./fixtures";
 
@@ -100,6 +104,73 @@ test("Docker flow tolerates invalid manifest layers", async ({ page }) => {
     "download",
     "nginx-latest.tar",
   );
+});
+
+test("MSStore flow renders a download link from a store URL", async ({
+  page,
+}) => {
+  await mockMsStoreApi(page);
+  const resolveRequest = page.waitForRequest((request) =>
+    request.url().includes("/api/msstore/resolve"),
+  );
+
+  await page.goto("/");
+  await page.getByTestId("tab-msstore").click();
+
+  await page.getByTestId("msstore-input").fill(msstoreProductUrl);
+  await page.getByTestId("msstore-submit").click();
+
+  const request = await resolveRequest;
+  const params = new URL(request.url()).searchParams;
+  expect(params.get("type")).toBe("url");
+  expect(params.get("query")).toBe(msstoreProductUrl);
+
+  await expect(page.getByTestId("msstore-download-link")).toHaveAttribute(
+    "href",
+    msstoreDownloadUrl,
+  );
+});
+
+test("MSStore flow auto-detects a raw ProductId", async ({ page }) => {
+  await mockMsStoreApi(page);
+  const resolveRequest = page.waitForRequest((request) =>
+    request.url().includes("/api/msstore/resolve"),
+  );
+
+  await page.goto("/");
+  await page.getByTestId("tab-msstore").click();
+
+  await page.getByTestId("msstore-input").fill(msstoreProductId);
+  await page.getByTestId("msstore-submit").click();
+
+  const request = await resolveRequest;
+  const params = new URL(request.url()).searchParams;
+  expect(params.get("type")).toBe("ProductId");
+  expect(params.get("query")).toBe(msstoreProductId);
+
+  await expect(page.getByTestId("msstore-download-link")).toBeVisible();
+});
+
+test("MSStore flow rejects unrecognized input without calling the API", async ({
+  page,
+}) => {
+  await mockMsStoreApi(page);
+  let resolveCalls = 0;
+  page.on("request", (request) => {
+    if (request.url().includes("/api/msstore/resolve")) {
+      resolveCalls += 1;
+    }
+  });
+
+  await page.goto("/");
+  await page.getByTestId("tab-msstore").click();
+
+  await page.getByTestId("msstore-input").fill("not a valid input");
+  await page.getByTestId("msstore-submit").click();
+
+  await expect(page.getByText("解析失败").first()).toBeVisible();
+  await expect(page.getByTestId("msstore-download-link")).toHaveCount(0);
+  expect(resolveCalls).toBe(0);
 });
 
 test("VSCode history survives a page reload", async ({ page }) => {

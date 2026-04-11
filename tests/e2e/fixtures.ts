@@ -5,6 +5,13 @@ export const vscodeExtensionUrl =
   "https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code";
 export const chromeExtensionId = "cjpalhdlnbpafiamejdnhcphjbkeiagm";
 export const dockerImage = "nginx:latest";
+export const msstoreProductUrl =
+  "https://apps.microsoft.com/detail/9n0dx20hk701?hl=zh-CN&gl=CN";
+export const msstoreProductId = "9N0DX20HK701";
+export const msstoreFileName =
+  "Microsoft.WindowsTerminal_1.22.11781.0_x64__8wekyb3d8bbwe.msixbundle";
+export const msstoreDownloadUrl =
+  "https://tlu.dl.delivery.mp.microsoft.com/filestreamingservice/files/sample-msix";
 
 const emptyZipBuffer = Buffer.from(
   "504b0506000000000000000000000000000000000000",
@@ -112,6 +119,31 @@ export async function mockDockerApis(page: Page, options: MockDockerOptions = {}
         "Content-Length": String(dockerLayerGzip.length),
       },
       body: dockerLayerGzip,
+    });
+  });
+}
+
+export async function mockMsStoreApi(page: Page) {
+  await page.route("**/api/msstore/resolve**", async (route) => {
+    await fulfillJson(route, {
+      productId: msstoreProductId,
+      title: "Windows Terminal",
+      publisherName: "Microsoft Corporation",
+      description: "The new Windows Terminal.",
+      packageFamilyNames: ["Microsoft.WindowsTerminal_8wekyb3d8bbwe"],
+      market: "CN",
+      language: "zh-cn",
+      files: [
+        {
+          name: msstoreFileName,
+          url: msstoreDownloadUrl,
+          expires: "2026-04-12 00:00:00 UTC",
+          sha1: "abc123def456",
+          size: "12.3 MB",
+        },
+      ],
+      filesSource: "rg-adguard",
+      skus: [],
     });
   });
 }
