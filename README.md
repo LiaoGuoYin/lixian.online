@@ -89,6 +89,10 @@ pnpm test:e2e:headed
 pnpm test:e2e:ui
 ```
 
+## Acknowledgements
+
+- Microsoft Store package resolution relies on the public service provided by [store.rg-adguard.net](https://store.rg-adguard.net/). Huge thanks to them — the MSStore download feature would not exist without it.
+
 ## License
 
 MIT

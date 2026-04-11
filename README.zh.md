@@ -89,6 +89,10 @@ pnpm test:e2e:headed
 pnpm test:e2e:ui
 ```
 
+## 致谢
+
+- Microsoft Store 安装包解析依赖 [store.rg-adguard.net](https://store.rg-adguard.net/) 提供的公开服务，特此致谢。没有它，本项目的 MSStore 下载功能无法实现。
+
 ## License
 
 MIT
