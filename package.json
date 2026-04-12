@@ -1,12 +1,12 @@
 {
   "name": "lixian-online",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
     "dev": "NODE_OPTIONS='--inspect' next dev",
     "dev:e2e": "next dev --hostname 127.0.0.1 --port 3100",
     "build": "next build",
-    "start": "next start",
+    "start": "PORT=12723 next start",
     "lint": "eslint .",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
