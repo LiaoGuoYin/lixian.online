@@ -54,9 +54,7 @@ export interface MSStoreResolveResult {
   packageFamilyNames: string[];
   market: string;
   language: string;
-  categoryId?: string;
   files?: MSStoreDownloadFile[];
-  filesSource?: "rg-adguard";
   filesError?: string;
   skus: MSStoreParsedSku[];
 }

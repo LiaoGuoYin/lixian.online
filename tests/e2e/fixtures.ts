@@ -147,7 +147,6 @@ export async function mockMsStoreApi(
           size: "12.3 MB",
         },
       ],
-      filesSource: "rg-adguard",
       skus: [],
     });
   });

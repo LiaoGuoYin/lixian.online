@@ -5,7 +5,6 @@ import {
   mockChromeApis,
   mockDockerApis,
   mockMsStoreApi,
-  msstoreFileName,
   msstoreHttpDownloadUrl,
   mockVsCodeApi,
   msstoreDownloadUrl,
@@ -155,7 +154,7 @@ test("MSStore flow auto-detects a raw ProductId", async ({ page }) => {
   await expect(page.getByTestId("msstore-download-link")).toBeVisible();
 });
 
-test("MSStore flow proxies HTTP download links through same-origin API", async ({
+test("MSStore flow normalizes HTTP download links to HTTPS direct CDN URLs", async ({
   page,
 }) => {
   await mockMsStoreApi(page, { downloadUrl: msstoreHttpDownloadUrl });
@@ -166,15 +165,9 @@ test("MSStore flow proxies HTTP download links through same-origin API", async (
   await page.getByTestId("msstore-input").fill(msstoreProductUrl);
   await page.getByTestId("msstore-submit").click();
 
-  const href = await page
-    .getByTestId("msstore-download-link")
-    .getAttribute("href");
-
-  expect(href).toBe(
-    `/api/msstore/download?${new URLSearchParams({
-      url: msstoreHttpDownloadUrl,
-      filename: msstoreFileName,
-    }).toString()}`,
+  await expect(page.getByTestId("msstore-download-link")).toHaveAttribute(
+    "href",
+    msstoreDownloadUrl,
   );
 });
 
