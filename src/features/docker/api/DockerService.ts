@@ -73,7 +73,6 @@ class DockerService {
 
   async getTagList(imageInfo: DockerImageInfo): Promise<string[]> {
     try {
-      // 使用代理 API 避免 CORS 问题
       const namespace = imageInfo.namespace || 'library';
       const url = `/api/docker/tags?namespace=${namespace}&repository=${imageInfo.repository}`;
       
@@ -82,7 +81,9 @@ class DockerService {
       
       return tags;
     } catch (error) {
-      console.warn('获取标签列表失败:', error);
+      const serverMessage = (error as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error;
+      if (serverMessage) throw new Error(serverMessage);
       throw error;
     }
   }

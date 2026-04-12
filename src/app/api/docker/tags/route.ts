@@ -47,10 +47,12 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Docker 标签代理错误:', error);
-    return NextResponse.json(
-      { error: '服务器内部错误' },
-      { status: 500 }
-    );
+    const cause = (error as { cause?: { code?: string } })?.cause;
+    const isTimeout = cause?.code === 'UND_ERR_CONNECT_TIMEOUT';
+    const message = isTimeout
+      ? '连接 Docker Hub 超时，请检查网络环境或稍后重试'
+      : '无法连接 Docker Hub，请检查网络环境';
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }
 
