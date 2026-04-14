@@ -27,6 +27,7 @@ const DynamicFallback = () => (
 const tabLoaders: Record<string, TabLoader> = {
   vscode: () => import("@/features/vscode/components/VSCodeDownloader"),
   chrome: () => import("@/features/chrome/components/ChromeDownloader"),
+  edge: () => import("@/features/edge/components/EdgeDownloader"),
   docker: () => import("@/features/docker/components/DockerDownloader"),
   msstore: () => import("@/features/msstore/components/MSStoreDownloader"),
 };
@@ -71,7 +72,7 @@ export default function TabPage({ tab }: Props) {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-3 pb-8 pt-6 sm:px-6 sm:pb-12 sm:pt-10 md:py-20">
+      <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-3 pb-8 pt-6 sm:px-6 sm:pb-12 sm:pt-10 md:py-20 xl:max-w-5xl">
         {/* Hero Section */}
         <div className="mb-5 animate-fade-in text-center sm:mb-10 md:mb-12">
           <h1 className="mb-2 flex flex-wrap items-baseline justify-center gap-1 text-[1.75rem] font-bold tracking-tight text-foreground min-[360px]:text-3xl sm:mb-3 sm:text-4xl md:text-5xl">
@@ -93,25 +94,25 @@ export default function TabPage({ tab }: Props) {
         {/* Main Card */}
         <Card className="animate-slide-up overflow-visible rounded-[1.25rem] border-0 bg-card/80 shadow-apple-lg backdrop-blur-xl">
           <CardContent className="p-0">
-            <div className="px-3 pb-0 pt-4 sm:px-6 sm:pt-6">
+            <div className="px-4 pb-0 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
               <Tabs
                 value={activeTab}
                 onValueChange={handleTabChange}
                 className="w-full"
               >
-                <TabsList className="grid h-auto w-full grid-cols-1 gap-1 rounded-apple border border-border/50 bg-secondary/60 p-1 backdrop-blur-sm min-[360px]:grid-cols-2 sm:grid-cols-4">
+                <TabsList className="grid h-auto w-full grid-cols-1 gap-1.5 rounded-apple border border-border/50 bg-secondary/60 p-1.5 backdrop-blur-sm min-[360px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                   {featureTabs.map((ft) => (
                     <TabsTrigger
                       key={ft.id}
                       value={ft.id}
                       data-testid={`tab-${ft.id}`}
-                      className="min-w-0 gap-1.5 rounded-apple-sm px-2.5 py-2 text-xs font-medium whitespace-normal data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-apple-button sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+                      className="h-full w-full min-w-0 gap-2 rounded-apple-sm px-3 py-2.5 text-sm font-medium whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-apple-button sm:px-4 sm:py-3"
                     >
                       <ft.icon className="h-4 w-4 flex-shrink-0" />
                       {ft.shortLabel ? (
                         <>
-                          <span className="hidden sm:inline">{ft.label}</span>
-                          <span className="sm:hidden">{ft.shortLabel}</span>
+                          <span className="hidden xl:inline">{ft.label}</span>
+                          <span className="xl:hidden">{ft.shortLabel}</span>
                         </>
                       ) : (
                         ft.label

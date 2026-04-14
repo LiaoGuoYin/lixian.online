@@ -1,12 +1,13 @@
-import type { ComponentType, SVGProps } from "react";
+import type { ComponentType } from "react";
 import {
   VSCodeIcon,
   ChromeIcon,
+  EdgeIcon,
   DockerIcon,
   MicrosoftStoreIcon,
 } from "@/shared/ui/icons";
 
-export type TabIcon = ComponentType<SVGProps<SVGSVGElement>>;
+export type TabIcon = ComponentType<{ className?: string }>;
 
 export interface DownloaderProps {
   defaultValue?: string;
@@ -27,6 +28,7 @@ export interface FeatureTabConfig {
 export const featureTabs: FeatureTabConfig[] = [
   { id: "vscode", icon: VSCodeIcon, label: "VSCode 插件", shortLabel: "VSCode" },
   { id: "chrome", icon: ChromeIcon, label: "Chrome 拓展", shortLabel: "Chrome" },
+  { id: "edge", icon: EdgeIcon, label: "Edge 拓展", shortLabel: "Edge" },
   { id: "docker", icon: DockerIcon, label: "Docker 镜像", shortLabel: "Docker" },
   { id: "msstore", icon: MicrosoftStoreIcon, label: "Microsoft 商店", shortLabel: "MS商店" },
 ];

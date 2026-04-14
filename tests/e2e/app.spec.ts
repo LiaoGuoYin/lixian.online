@@ -2,8 +2,11 @@ import { expect, test } from "@playwright/test";
 import {
   chromeExtensionId,
   dockerImage,
+  edgeExtensionId,
+  edgeExtensionUrl,
   mockChromeApis,
   mockDockerApis,
+  mockEdgeApis,
   mockMsStoreApi,
   msstoreFileName,
   msstoreHttpDownloadUrl,
@@ -40,7 +43,7 @@ test("Chrome flow prepares CRX and ZIP downloads", async ({ page }) => {
   await page.getByTestId("chrome-input").fill(chromeExtensionId);
   await page.getByTestId("chrome-submit").click();
 
-  await expect(page.getByText("uBlock Origin")).toBeVisible();
+  await expect(page.getByText("uBlock Origin", { exact: true })).toBeVisible();
   await expect(
     page.getByText("A fast and trusted content blocker."),
   ).toBeVisible();
@@ -63,6 +66,72 @@ test("Chrome flow prepares CRX and ZIP downloads", async ({ page }) => {
     "href",
     /blob:/,
   );
+});
+
+test("Edge flow resolves a store URL and prepares CRX and ZIP downloads", async ({
+  page,
+}) => {
+  await mockEdgeApis(page);
+  const detailRequest = page.waitForRequest((request) =>
+    request.url().includes("/api/edge/detail"),
+  );
+
+  await page.goto("/");
+  await page.getByTestId("tab-edge").click();
+
+  await page.getByTestId("edge-input").fill(edgeExtensionUrl);
+  await page.getByTestId("edge-submit").click();
+
+  const request = await detailRequest;
+  expect(new URL(request.url()).searchParams.get("query")).toBe(edgeExtensionUrl);
+
+  await expect(
+    page.getByText("uBlock Origin Lite", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("开发者: Raymond Hill")).toBeVisible();
+  await expect(page.getByText("分类: Productivity")).toBeVisible();
+
+  await page.getByTestId("edge-download-both").click();
+
+  await expect(page.getByTestId("edge-download-crx-link")).toHaveAttribute(
+    "download",
+    `${edgeExtensionId}.crx`,
+  );
+  await expect(page.getByTestId("edge-download-zip-link")).toHaveAttribute(
+    "download",
+    `${edgeExtensionId}.zip`,
+  );
+  await expect(page.getByTestId("edge-download-crx-link")).toHaveAttribute(
+    "href",
+    /blob:/,
+  );
+  await expect(page.getByTestId("edge-download-zip-link")).toHaveAttribute(
+    "href",
+    /blob:/,
+  );
+});
+
+test("Edge flow offers search suggestions before resolving details", async ({
+  page,
+}) => {
+  await mockEdgeApis(page);
+
+  await page.goto("/");
+  await page.getByTestId("tab-edge").click();
+
+  await page.getByTestId("edge-input").fill("ublock");
+  await expect(
+    page.getByText("uBlock Origin Lite", { exact: true }),
+  ).toBeVisible();
+
+  await page
+    .getByRole("button", { name: /uBlock Origin Lite/ })
+    .first()
+    .click();
+  await expect(page.getByTestId("edge-input")).toHaveValue(edgeExtensionId);
+
+  await page.getByTestId("edge-submit").click();
+  await expect(page.getByText("A permission-light content blocker for Edge.")).toBeVisible();
 });
 
 test("Docker flow prepares a docker load tarball", async ({ page }) => {

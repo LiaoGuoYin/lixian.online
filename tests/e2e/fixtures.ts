@@ -4,6 +4,9 @@ import { gzipSync } from "node:zlib";
 export const vscodeExtensionUrl =
   "https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code";
 export const chromeExtensionId = "cjpalhdlnbpafiamejdnhcphjbkeiagm";
+export const edgeExtensionId = "cimighlppcgcoapaliogpjjdehbnofhn";
+export const edgeExtensionUrl =
+  "https://microsoftedge.microsoft.com/addons/detail/ublock-origin-lite/cimighlppcgcoapaliogpjjdehbnofhn";
 export const dockerImage = "nginx:latest";
 export const msstoreProductUrl =
   "https://apps.microsoft.com/detail/9n0dx20hk701?hl=zh-CN&gl=CN";
@@ -64,6 +67,54 @@ export async function mockChromeApis(page: Page) {
   });
 
   await page.route("**/api/chrome/download**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      headers: {
+        "Content-Type": "application/x-chrome-extension",
+        "Content-Length": String(emptyZipBuffer.length),
+      },
+      body: emptyZipBuffer,
+    });
+  });
+}
+
+export async function mockEdgeApis(page: Page) {
+  await page.route("**/api/edge/detail**", async (route) => {
+    await fulfillJson(route, {
+      crxId: edgeExtensionId,
+      storeProductId: "0RDCK9JPHJM1",
+      name: "uBlock Origin Lite",
+      version: "2026.4.1",
+      developer: "Raymond Hill",
+      category: "Productivity",
+      shortDescription: "A permission-light content blocker for Edge.",
+      description: "A permission-light content blocker for Edge.",
+      averageRating: 4.6,
+      ratingCount: 137,
+      activeInstallCount: 482931,
+      logoUrl:
+        "//store-images.s-microsoft.com/image/apps.15138.3fde90c9-1128-4c27-ad59-25612a2a874e.sample.png",
+      isBadgedAsFeatured: true,
+    });
+  });
+
+  await page.route("**/api/edge/search**", async (route) => {
+    await fulfillJson(route, {
+      results: [
+        {
+          id: edgeExtensionId,
+          storeProductId: "0RDCK9JPHJM1",
+          name: "uBlock Origin Lite",
+          developer: "Raymond Hill",
+          description: "A permission-light content blocker for Edge.",
+          iconUrl:
+            "//store-images.s-microsoft.com/image/apps.15138.3fde90c9-1128-4c27-ad59-25612a2a874e.sample.png",
+        },
+      ],
+    });
+  });
+
+  await page.route("**/api/edge/download**", async (route) => {
     await route.fulfill({
       status: 200,
       headers: {
