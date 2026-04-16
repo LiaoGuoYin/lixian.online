@@ -50,24 +50,44 @@ GET {{baseUrl}}/api/chrome/download?id=cjpalhdlnbpafiamejdnhcphjbkeiagm
 
 
 ### ========================================
+### Microsoft Edge
+### ========================================
+
+### 6. 搜索扩展
+GET {{baseUrl}}/api/edge/search?q=ublock
+
+### 7. 通过 CRX ID 获取扩展详情
+GET {{baseUrl}}/api/edge/detail?query=cimighlppcgcoapaliogpjjdehbnofhn
+
+### 8. 通过 ProductId 获取扩展详情
+GET {{baseUrl}}/api/edge/detail?query=0RDCK9JPHJM1
+
+### 9. 通过商店 URL 获取扩展详情
+GET {{baseUrl}}/api/edge/detail?query=https%3A%2F%2Fmicrosoftedge.microsoft.com%2Faddons%2Fdetail%2Fublock-origin-lite%2Fcimighlppcgcoapaliogpjjdehbnofhn
+
+### 10. 下载 CRX
+GET {{baseUrl}}/api/edge/download?id=cimighlppcgcoapaliogpjjdehbnofhn
+
+
+### ========================================
 ### Docker
 ### ========================================
 
-### 6. 获取标签
+### 11. 获取标签
 GET {{baseUrl}}/api/docker/tags?namespace=library&repository=nginx
 
-### 7. 获取匿名 token
+### 12. 获取匿名 token
 # @name dockerAuth
 GET {{baseUrl}}/api/docker/auth?namespace=library&repository=nginx
 
-### 8. 获取 manifest（依赖上一步 token）
+### 13. 获取 manifest（依赖上一步 token）
 @dockerToken = {{dockerAuth.response.body.token}}
 GET {{baseUrl}}/api/docker/manifest?namespace=library&repository=nginx&tag=latest&token={{dockerToken}}
 
-### 9. 下载 layer（digest 需替换成 manifest 返回的 layers[].digest）
+### 14. 下载 layer（digest 需替换成 manifest 返回的 layers[].digest）
 GET {{baseUrl}}/api/docker/layer?namespace=library&repository=nginx&digest=sha256:replace-me&token={{dockerToken}}
 
-### 10. 搜索候选镜像
+### 15. 搜索候选镜像
 GET {{baseUrl}}/api/docker/search?q=redis&page_size=5
 
 
@@ -75,19 +95,19 @@ GET {{baseUrl}}/api/docker/search?q=redis&page_size=5
 ### Microsoft Store
 ### ========================================
 
-### 11. 通过商店 URL 解析
+### 16. 通过商店 URL 解析
 GET {{baseUrl}}/api/msstore/resolve?type=url&query=https%3A%2F%2Fapps.microsoft.com%2Fdetail%2F9N0DX20HK701&market=US&language=en-us
 
-### 12. 通过 ProductId 解析
+### 17. 通过 ProductId 解析
 GET {{baseUrl}}/api/msstore/resolve?type=ProductId&query=9N0DX20HK701&market=US&language=en-us
 
-### 13. 通过 PackageFamilyName 解析
+### 18. 通过 PackageFamilyName 解析
 GET {{baseUrl}}/api/msstore/resolve?type=PackageFamilyName&query=Microsoft.WindowsTerminal_8wekyb3d8bbwe&market=US&language=en-us
 
-### 14. 通过 CategoryId 解析
+### 19. 通过 CategoryId 解析
 GET {{baseUrl}}/api/msstore/resolve?type=CategoryId&query=858014f3-3934-4abe-8078-4aa193e74ca8&market=US&language=en-us
 
-### 15. 代理 HTTP 下载链接
+### 20. 代理 HTTP 下载链接
 GET {{baseUrl}}/api/msstore/download?url=http%3A%2F%2Ftlu.dl.delivery.mp.microsoft.com%2Ffilestreamingservice%2Ffiles%2Fsample-msix&filename=WindowsTerminal.msixbundle
 
 
@@ -104,10 +124,16 @@ GET {{baseUrl}}/api/docker/manifest?namespace=library&repository=nginx&tag=lates
 ### Chrome download - 无效 ID -> 400
 GET {{baseUrl}}/api/chrome/download?id=invalid
 
+### Edge detail - 缺少 query -> 400
+GET {{baseUrl}}/api/edge/detail
+
+### Edge download - 无效 ID -> 400
+GET {{baseUrl}}/api/edge/download?id=invalid
+
 ### Chrome search - 缺少关键词 -> 400
 GET {{baseUrl}}/api/chrome/search
 
-### MSStore resolve - 缺少 query -> 500（当前实现会返回解析失败）
+### MSStore resolve - 缺少 query -> 404 或 500（取决于当前上游返回）
 GET {{baseUrl}}/api/msstore/resolve?type=ProductId
 
 ### MSStore download - 非 HTTP 链接 -> 400

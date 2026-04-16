@@ -1,5 +1,6 @@
 import { ChromeExtensionInfo, ChromeDownloadInfo, ChromeSearchResult } from "@/features/chrome/types";
 import { get } from "@/shared/lib/http";
+import { convertCrxToZip } from "@/shared/lib/crx";
 
 class ChromeService {
   // 从 Chrome Web Store URL 中提取扩展 ID
@@ -62,95 +63,7 @@ class ChromeService {
 
   // 从 CRX 文件转换为 ZIP（浏览器环境实现）
   async convertCrxToZip(crxBlob: Blob): Promise<Blob> {
-    try {
-      const buffer = await crxBlob.arrayBuffer();
-      
-      // 如果文件太小，直接返回原文件
-      if (buffer.byteLength < 16) {
-        console.warn('文件太小，可能已经是 ZIP 格式');
-        return crxBlob;
-      }
-      
-      const view = new DataView(buffer);
-      
-      // 检查是否已经是 ZIP 文件（PK 魔数）
-      const zipMagic = new TextDecoder().decode(buffer.slice(0, 2));
-      if (zipMagic === "PK") {
-        console.log('文件已经是 ZIP 格式');
-        return new Blob([buffer], { type: 'application/zip' });
-      }
-      
-      // 检查 CRX 魔数
-      const magic = new TextDecoder().decode(buffer.slice(0, 4));
-      let zipOffset = 0;
-      
-      if (magic === "Cr24") {
-        // 标准 CRX 格式
-        const version = view.getUint32(4, true);
-        
-        if (version === 3) {
-          // CRX3 格式
-          if (buffer.byteLength < 12) {
-            throw new Error("CRX3 文件头不完整");
-          }
-          const headerSize = view.getUint32(8, true);
-          zipOffset = 12 + headerSize;
-        } else if (version === 2) {
-          // CRX2 格式
-          if (buffer.byteLength < 16) {
-            throw new Error("CRX2 文件头不完整");
-          }
-          const pubKeyLength = view.getUint32(8, true);
-          const sigLength = view.getUint32(12, true);
-          zipOffset = 16 + pubKeyLength + sigLength;
-        } else {
-          throw new Error(`不支持的 CRX 版本: ${version}`);
-        }
-      } else {
-        // 尝试查找 ZIP 魔数 "PK"
-        console.warn('没有找到 CRX 魔数，尝试查找 ZIP 数据');
-        
-        for (let i = 0; i < Math.min(buffer.byteLength - 2, 1024); i++) {
-          const testMagic = new TextDecoder().decode(buffer.slice(i, i + 2));
-          if (testMagic === "PK") {
-            zipOffset = i;
-            break;
-          }
-        }
-        
-        if (zipOffset === 0) {
-          // 如果找不到 ZIP 魔数，假设整个文件就是 ZIP
-          console.warn('未找到 ZIP 魔数，假设整个文件为 ZIP 格式');
-          return new Blob([buffer], { type: 'application/zip' });
-        }
-      }
-      
-      // 验证 ZIP 偏移量
-      if (zipOffset >= buffer.byteLength) {
-        throw new Error('ZIP 数据偏移量超出文件范围');
-      }
-      
-      // 提取 ZIP 数据并验证
-      const zipData = buffer.slice(zipOffset);
-      
-      // 验证提取的数据是否为有效的 ZIP
-      if (zipData.byteLength < 4) {
-        throw new Error('提取的 ZIP 数据太小');
-      }
-      
-      const zipHeader = new TextDecoder().decode(zipData.slice(0, 2));
-      if (zipHeader !== "PK") {
-        throw new Error('提取的数据不是有效的 ZIP 格式');
-      }
-      
-      return new Blob([zipData], { type: 'application/zip' });
-      
-    } catch (error) {
-      console.error('CRX 转 ZIP 失败:', error);
-      // 返回原文件作为备选方案
-      console.warn('转换失败，返回原始文件');
-      return crxBlob;
-    }
+    return convertCrxToZip(crxBlob);
   }
 
   // 搜索 Chrome 扩展

@@ -8,6 +8,7 @@ export const site = {
     "下载",
     "VSCode",
     "Chrome",
+    "Edge",
     "Docker",
     "Microsoft Store",
     "离线安装包",
