@@ -322,26 +322,32 @@ UI 提供 3 个下载动作：
 - 若返回空数组，或请求以 404 结束，则调用 `GET /api/docker/search?q=...&page_size=5`
 - UI 会展示候选镜像链接和 Docker Hub 搜索入口
 
-#### 4.4.3 Manifest
+#### 4.4.3 Manifest 与平台选择
 
 标签解析完成后：
 
-- 客户端会预取 manifest，用于展示镜像层列表和总压缩大小
-- 预取流程为：
-  - `GET /api/docker/auth`
-  - `GET /api/docker/manifest`
+- 客户端先调用 `GET /api/docker/auth` 获取 token
+- 然后调用 `GET /api/docker/manifest`（不传 `platform`）探测可用平台
+- 如果是 manifest list / OCI index，UI 会展示架构选择器
+- 客户端默认选择 `linux/amd64`；若该平台不存在，则取列表第一项
+- 用户切换架构时，会重新拉取该平台的 manifest
 
 `/api/docker/manifest` 的行为：
 
 - 支持 schema2 manifest 和 OCI manifest
-- 若上游返回 manifest list / OCI index，会选择 `linux/amd64`
+- 若上游返回 manifest list / OCI index：
+  - 未传 `platform` 参数：返回 `{ type: 'manifest_list', platforms: [...] }`，每项含 `os`、`architecture`、可选 `variant`、`digest`，并过滤掉 `unknown` 平台
+  - 传入 `platform`（如 `linux/amd64`、`linux/arm64`、`linux/arm/v7`）：按 `os` + `architecture` + 可选 `variant` 精确匹配；若指定了 variant 但匹配失败，会回退到忽略 variant 的匹配
+  - 找不到目标平台时返回 404 并附错误信息
 - 客户端会过滤掉无效 layer 描述，避免后续打包失败
+
+切换标签或镜像时，平台列表与已选平台会被重置。
 
 #### 4.4.4 下载与打包
 
 下载逻辑：
 
-1. 若已有预取的 manifest，优先复用；否则重新获取。
+1. 若已有预取的 manifest，优先复用；否则按当前选中的 `platform` 重新获取。
 2. 逐层下载前重新调用 `/api/docker/auth` 获取新 token，避免大层下载时 token 过期。
 3. 调用 `/api/docker/layer` 下载 blob，并按字节更新当前层进度。
 4. 所有 layer 下载完成后，在浏览器中生成 `docker load` 兼容 TAR。
@@ -351,8 +357,14 @@ UI 提供 3 个下载动作：
 - 按魔数识别 gzip / zstd / 未压缩 layer
 - gzip layer 会先解压再计算未压缩内容的 SHA256，生成 `diff_ids`
 - `layer.tar` 写入的是解压后的 tar 内容
+- 镜像 config JSON 中的 `architecture` 字段使用当前选中的平台架构（缺省回退为 `amd64`）
 - 最终打包出 `manifest.json`、镜像 config JSON、每层目录及 `layer.tar`
 - zstd layer 当前会抛出显式“不支持”错误
+
+下载文件名规则：
+
+- 基础格式为 `{namespace}-{repository}-{tag}.tar`
+- 当所选架构非 `amd64` 时，会在 `.tar` 前追加 `-{architecture}`，例如 `library-nginx-latest-arm64.tar`
 
 ### 4.5 Microsoft Store
 
@@ -437,7 +449,7 @@ GET /api/msstore/resolve?type={type}&query={query}&market=US&language=en-us
 | `/api/docker/tags` | `GET` | 代理 Docker Hub tags |
 | `/api/docker/search` | `GET` | 代理 Docker Hub 搜索 |
 | `/api/docker/auth` | `GET` | 获取 Docker Registry Bearer token |
-| `/api/docker/manifest` | `GET` | 代理 Docker manifest / manifest list |
+| `/api/docker/manifest` | `GET` | 代理 Docker manifest / manifest list；不传 `platform` 返回平台列表，传入则按平台筛选 |
 | `/api/docker/layer` | `GET` | 代理 Docker layer blob |
 | `/api/msstore/resolve` | `GET` | 解析 Microsoft Store 产品与文件列表 |
 | `/api/msstore/download` | `GET` | 代理允许的 HTTP 安装包链接 |

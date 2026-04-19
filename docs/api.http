@@ -80,14 +80,17 @@ GET {{baseUrl}}/api/docker/tags?namespace=library&repository=nginx
 # @name dockerAuth
 GET {{baseUrl}}/api/docker/auth?namespace=library&repository=nginx
 
-### 13. 获取 manifest（依赖上一步 token）
+### 13. 获取可用平台列表（不传 platform；多架构镜像时返回 { type: 'manifest_list', platforms: [...] }）
 @dockerToken = {{dockerAuth.response.body.token}}
 GET {{baseUrl}}/api/docker/manifest?namespace=library&repository=nginx&tag=latest&token={{dockerToken}}
 
-### 14. 下载 layer（digest 需替换成 manifest 返回的 layers[].digest）
+### 14. 获取指定平台的 manifest
+GET {{baseUrl}}/api/docker/manifest?namespace=library&repository=nginx&tag=latest&token={{dockerToken}}&platform=linux/arm64
+
+### 15. 下载 layer（digest 需替换成 manifest 返回的 layers[].digest）
 GET {{baseUrl}}/api/docker/layer?namespace=library&repository=nginx&digest=sha256:replace-me&token={{dockerToken}}
 
-### 15. 搜索候选镜像
+### 16. 搜索候选镜像
 GET {{baseUrl}}/api/docker/search?q=redis&page_size=5
 
 
@@ -95,19 +98,19 @@ GET {{baseUrl}}/api/docker/search?q=redis&page_size=5
 ### Microsoft Store
 ### ========================================
 
-### 16. 通过商店 URL 解析
+### 17. 通过商店 URL 解析
 GET {{baseUrl}}/api/msstore/resolve?type=url&query=https%3A%2F%2Fapps.microsoft.com%2Fdetail%2F9N0DX20HK701&market=US&language=en-us
 
-### 17. 通过 ProductId 解析
+### 18. 通过 ProductId 解析
 GET {{baseUrl}}/api/msstore/resolve?type=ProductId&query=9N0DX20HK701&market=US&language=en-us
 
-### 18. 通过 PackageFamilyName 解析
+### 19. 通过 PackageFamilyName 解析
 GET {{baseUrl}}/api/msstore/resolve?type=PackageFamilyName&query=Microsoft.WindowsTerminal_8wekyb3d8bbwe&market=US&language=en-us
 
-### 19. 通过 CategoryId 解析
+### 20. 通过 CategoryId 解析
 GET {{baseUrl}}/api/msstore/resolve?type=CategoryId&query=858014f3-3934-4abe-8078-4aa193e74ca8&market=US&language=en-us
 
-### 20. 代理 HTTP 下载链接
+### 21. 代理 HTTP 下载链接
 GET {{baseUrl}}/api/msstore/download?url=http%3A%2F%2Ftlu.dl.delivery.mp.microsoft.com%2Ffilestreamingservice%2Ffiles%2Fsample-msix&filename=WindowsTerminal.msixbundle
 
 

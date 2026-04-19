@@ -115,11 +115,14 @@ Additional feature-specific files:
 - `extractImageInfo()` normalizes missing namespace to `library` and missing tag to `latest`.
 - Tags are loaded through `GET /api/docker/tags`.
 - If a repository is missing or returns no tags, candidate repositories are fetched through `GET /api/docker/search`.
-- After tag resolution, the client prefetches the manifest through `GET /api/docker/auth` + `GET /api/docker/manifest`.
-- `GET /api/docker/manifest` resolves manifest lists / OCI indexes to `linux/amd64`.
+- After tag resolution, the client prefetches available platforms through `GET /api/docker/auth` + `GET /api/docker/manifest` (no `platform` param).
+- `GET /api/docker/manifest` without a `platform` param returns `{ type: 'manifest_list', platforms: [...] }`; with a `platform` param (e.g. `linux/amd64`, `linux/arm64`, `linux/arm/v7`) it filters the manifest list and falls back to ignoring `variant` if the exact match misses.
+- For multi-arch images, the client shows an architecture selector and defaults to `linux/amd64` (or the first platform when amd64 is absent); single-arch images skip the selector.
+- Switching architecture refetches the manifest for the chosen platform.
 - Before each layer download, the client refreshes the auth token to avoid expiry during large downloads.
 - Layers are downloaded through `GET /api/docker/layer`.
-- In the browser, layer blobs are decompressed by magic bytes, hashed to generate `diff_ids`, and packed into a `docker load` compatible TAR.
+- In the browser, layer blobs are decompressed by magic bytes, hashed to generate `diff_ids`, and packed into a `docker load` compatible TAR; the TAR config's `architecture` field follows the selected platform.
+- The download filename is `{namespace}-{repository}-{tag}.tar`, with `-{architecture}` appended when the selected arch is not `amd64`.
 - zstd-compressed layers currently throw an explicit unsupported error.
 
 ### MSStore

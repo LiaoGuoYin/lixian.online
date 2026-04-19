@@ -16,5 +16,5 @@ export const site = {
   ],
   author: "lixian.online",
   userAgent: "Mozilla/5.0 (compatible; lixian.online/1.0)",
-  github: "https://github.com/liaoguoyin/offdown",
+  github: "https://github.com/liaoguoyin/lixian.online",
 } as const;
