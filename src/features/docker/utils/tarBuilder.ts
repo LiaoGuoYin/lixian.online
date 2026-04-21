@@ -88,22 +88,20 @@ export class TarBuilder {
   }
 
   // 生成最终的 TAR 数据
-  build(): Uint8Array {
+  // Returns a Blob directly — avoids allocating one contiguous Uint8Array for the whole archive.
+  // Large Docker images (e.g. odoo:latest ~1.5GB decompressed) exceed the single-ArrayBuffer
+  // size limit when concatenated; Blobs let the browser spool to disk.
+  build(): Blob {
     // TAR 文件以两个空的 512 字节块结束
     const endBlock1 = new Uint8Array(512);
     const endBlock2 = new Uint8Array(512);
     this.data.push(endBlock1, endBlock2);
     this.totalSize += 1024;
-    
-    // 合并所有数据
-    const result = new Uint8Array(this.totalSize);
-    let offset = 0;
-    
-    for (const chunk of this.data) {
-      result.set(chunk, offset);
-      offset += chunk.length;
-    }
-    
-    return result;
+
+    return new Blob(this.data as BlobPart[], { type: 'application/x-tar' });
+  }
+
+  get size(): number {
+    return this.totalSize;
   }
 }

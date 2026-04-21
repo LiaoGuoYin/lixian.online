@@ -276,14 +276,14 @@ class DockerService {
     });
 
     const tarBuilder = new TarBuilder();
-    
+
     // 构建 Docker Load 格式的 TAR 文件
     await this.buildDockerLoadTar(tarBuilder, safeManifest, safeLayers, imageInfo, architecture);
-    
-    const tarData = tarBuilder.build();
-    console.log('TAR 文件大小:', tarData.length, 'bytes');
 
-    return new Blob([tarData.buffer as ArrayBuffer], { type: 'application/x-tar' });
+    const tarBlob = tarBuilder.build();
+    console.log('TAR 文件大小:', tarBlob.size, 'bytes');
+
+    return tarBlob;
   }
 
   private async buildDockerLoadTar(
