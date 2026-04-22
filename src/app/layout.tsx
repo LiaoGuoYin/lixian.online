@@ -17,13 +17,18 @@ export const metadata: Metadata = {
   authors: [{ name: site.author }],
 };
 
+const themeInitScript = `(function(){try{var t=localStorage.getItem('theme');var sysDark=matchMedia('(prefers-color-scheme: dark)').matches;var dark=t==='dark'||((t==='system'||!t)&&sysDark);if(dark)document.documentElement.classList.add('dark');}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh" className="antialiased">
+    <html lang="zh" className="antialiased" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="font-sans">
         <div className="min-h-screen bg-background text-foreground">
           {children}
