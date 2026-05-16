@@ -29,6 +29,18 @@ pnpm start        # production server (default port 12723)
 
 Other scripts: `pnpm lint`, `pnpm test:e2e`, `pnpm test:e2e:headed`, `pnpm test:e2e:ui`.
 
+## Run with Docker
+
+Prefer containers? The repo ships a multi-stage `Dockerfile` and a `docker-compose.yaml`:
+
+```bash
+docker compose up -d        # build the image and start in the background
+docker compose logs -f      # follow logs
+docker compose down         # stop and remove the container
+```
+
+Then open <http://localhost:12723>. Change the host port by editing the `ports` mapping in `docker-compose.yaml` (e.g. `"8080:12723"`).
+
 ## Self-hosting tips
 
 > **Pick a server with a clean route to the upstreams.** This project proxies requests to Docker Hub, the Chrome Web Store, Edge Add-ons, the VSCode Marketplace, and Microsoft Store endpoints. The network path from your server to these services needs to be fast and stable for downloads to work. From mainland China the route is often slow or unstable, so a VPS elsewhere (Singapore, Japan, US, Europe, etc.) is strongly recommended — otherwise the page will load but downloads may hang or time out.
