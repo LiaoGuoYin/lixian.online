@@ -4,6 +4,7 @@ import { SearchableSelect } from "@/shared/ui/searchable-select";
 import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
 import { Card, CardContent } from "@/shared/ui/card";
+import { DownloadResultCard } from "@/shared/ui/download-result-card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import {
   Download,
@@ -343,93 +344,72 @@ export default function DockerDownloader({
         </div>
       )}
 
-      {downloadProgress && (
-        <Card className={`shadow-apple ${downloadProgress.status === "completed" && downloadUrl ? "border-primary/30 bg-primary/5" : "border-border/70 bg-secondary/40"}`}>
+      {downloadProgress && downloadProgress.status !== "completed" && (
+        <Card className="border border-border/70 bg-secondary/40 shadow-apple">
           <CardContent className="p-4 sm:p-5">
             <div className="space-y-3">
-              {/* Progress header */}
-              {downloadProgress.status !== "completed" && (
-                <>
-                  <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-                    <span className="text-foreground font-medium">
-                      {downloadProgress.status === "downloading"
-                        ? `下载中... 第 ${downloadProgress.layerIndex}/${downloadProgress.totalLayers} 层`
-                        : downloadProgress.status === "packing"
-                          ? "打包中..."
-                          : "下载出错"}
+              <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-foreground font-medium">
+                  {downloadProgress.status === "downloading"
+                    ? `下载中... 第 ${downloadProgress.layerIndex}/${downloadProgress.totalLayers} 层`
+                    : downloadProgress.status === "packing"
+                      ? "打包中..."
+                      : "下载出错"}
+                </span>
+                {downloadProgress.status === "downloading" &&
+                  downloadProgress.totalSize > 0 && (
+                    <span className="text-xs text-muted-foreground tabular-nums sm:text-sm">
+                      {formatBytes(
+                        downloadProgress.downloadedSize +
+                          downloadProgress.currentLayerDownloaded,
+                      )}{" "}
+                      / {formatBytes(downloadProgress.totalSize)}
                     </span>
-                    {downloadProgress.status === "downloading" &&
-                      downloadProgress.totalSize > 0 && (
-                        <span className="text-xs text-muted-foreground tabular-nums sm:text-sm">
-                          {formatBytes(
-                            downloadProgress.downloadedSize +
-                              downloadProgress.currentLayerDownloaded,
-                          )}{" "}
-                          / {formatBytes(downloadProgress.totalSize)}
-                        </span>
-                      )}
+                  )}
+              </div>
+              <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-150 ease-out"
+                  style={{ width: `${Math.min(progressPercent, 100)}%` }}
+                />
+              </div>
+              {downloadProgress.status === "downloading" &&
+                downloadProgress.currentLayerSize > 0 && (
+                  <div className="text-xs text-muted-foreground tabular-nums">
+                    当前层:{" "}
+                    {formatBytes(downloadProgress.currentLayerDownloaded)} /{" "}
+                    {formatBytes(downloadProgress.currentLayerSize)}
                   </div>
-                  <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="bg-primary h-full rounded-full transition-all duration-150 ease-out"
-                      style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                    />
-                  </div>
-                  {downloadProgress.status === "downloading" &&
-                    downloadProgress.currentLayerSize > 0 && (
-                      <div className="text-xs text-muted-foreground tabular-nums">
-                        当前层:{" "}
-                        {formatBytes(downloadProgress.currentLayerDownloaded)} /{" "}
-                        {formatBytes(downloadProgress.currentLayerSize)}
-                      </div>
-                    )}
-                </>
-              )}
-
-              {/* Completed: download link */}
-              {downloadProgress.status === "completed" && downloadUrl && (
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-start gap-3 min-w-0 sm:items-center">
-                    <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center">
-                      <Archive className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground break-all sm:truncate">
-                        {imageInfo
-                          ? dockerService.getDownloadFilename(imageInfo, selectedPlatform?.split('/')?.[1])
-                          : "docker-image.tar"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        docker load 导入
-                      </p>
-                    </div>
-                  </div>
-                  <a
-                    href={downloadUrl}
-                    download={
-                      imageInfo
-                        ? dockerService.getDownloadFilename(imageInfo, selectedPlatform?.split('/')?.[1])
-                        : "docker-image.tar"
-                    }
-                    className="w-full flex-shrink-0 sm:w-auto"
-                    data-testid="docker-download-link"
-                  >
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="w-full gap-1.5 sm:w-auto"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      下载
-                    </Button>
-                  </a>
-                </div>
-              )}
+                )}
             </div>
           </CardContent>
         </Card>
       )}
+
+      {downloadProgress?.status === "completed" &&
+        downloadUrl &&
+        (() => {
+          const filename = imageInfo
+            ? dockerService.getDownloadFilename(
+                imageInfo,
+                selectedPlatform?.split("/")?.[1],
+              )
+            : "docker-image.tar";
+          return (
+            <DownloadResultCard
+              rows={[
+                {
+                  icon: Archive,
+                  title: filename,
+                  description: "docker load 导入",
+                  href: downloadUrl,
+                  download: filename,
+                  testId: "docker-download-link",
+                },
+              ]}
+            />
+          );
+        })()}
     </form>
   );
 }

@@ -3,9 +3,9 @@ import { Button } from "@/shared/ui/button";
 import { SearchableSelect } from "@/shared/ui/searchable-select";
 import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
-import { Card, CardContent } from "@/shared/ui/card";
+import { DownloadResultCard } from "@/shared/ui/download-result-card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
-import { Download, Package, ExternalLink } from "lucide-react";
+import { Package, ExternalLink } from "lucide-react";
 import { useVSCodeDownloader } from "../hooks/useVSCodeDownloader";
 
 interface Props {
@@ -137,42 +137,18 @@ export default function VSCodeDownloader({
       </Button>
 
       {extensionInfo?.version && downloadUrl && (
-        <Card className="border border-primary/30 bg-primary/5 shadow-apple">
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-3 min-w-0 sm:items-center">
-                <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center">
-                  <Package className="h-4 w-4 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground break-all sm:truncate">
-                    版本 {extensionInfo.version}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    .vsix 离线安装包
-                  </p>
-                </div>
-              </div>
-              <a
-                href={downloadUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex-shrink-0 sm:w-auto"
-                data-testid="vscode-download-link"
-              >
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="w-full gap-1.5 sm:w-auto"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  下载
-                </Button>
-              </a>
-            </div>
-          </CardContent>
-        </Card>
+        <DownloadResultCard
+          rows={[
+            {
+              icon: Package,
+              title: `版本 ${extensionInfo.version}`,
+              description: ".vsix 离线安装包",
+              href: downloadUrl,
+              external: true,
+              testId: "vscode-download-link",
+            },
+          ]}
+        />
       )}
     </form>
   );

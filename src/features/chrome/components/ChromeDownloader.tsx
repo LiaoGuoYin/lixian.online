@@ -3,12 +3,15 @@ import { Button } from "@/shared/ui/button";
 import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
 import { Card, CardContent } from "@/shared/ui/card";
+import {
+  DownloadResultCard,
+  type DownloadResultRow,
+} from "@/shared/ui/download-result-card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import {
   Download,
   FileArchive,
   Package,
-  Info,
   Search,
   Loader2,
   ExternalLink,
@@ -293,79 +296,34 @@ export default function ChromeDownloader({
       )}
 
       {(downloadUrls.crx || downloadUrls.zip) && (
-        <Card className="border border-primary/30 bg-primary/5 shadow-apple">
-          <CardContent className="p-4 sm:p-5 space-y-3">
-            {downloadUrls.crx && (
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-start gap-3 min-w-0 sm:items-center">
-                  <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center">
-                    <Package className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground break-all sm:truncate">
-                      {extensionInfo?.id}.crx
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Chrome 原生扩展格式
-                    </p>
-                  </div>
-                </div>
-                <a
-                  href={downloadUrls.crx}
-                  download={`${extensionInfo?.id}.crx`}
-                  className="w-full flex-shrink-0 sm:w-auto"
-                  data-testid="chrome-download-crx-link"
-                >
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="w-full gap-1.5 sm:w-auto"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    下载
-                  </Button>
-                </a>
-              </div>
-            )}
-            {downloadUrls.crx && downloadUrls.zip && (
-              <div className="border-t border-border/40" />
-            )}
-            {downloadUrls.zip && (
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-start gap-3 min-w-0 sm:items-center">
-                  <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center">
-                    <FileArchive className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground break-all sm:truncate">
-                      {extensionInfo?.id}.zip
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      解压后可查看源码
-                    </p>
-                  </div>
-                </div>
-                <a
-                  href={downloadUrls.zip}
-                  download={`${extensionInfo?.id}.zip`}
-                  className="w-full flex-shrink-0 sm:w-auto"
-                  data-testid="chrome-download-zip-link"
-                >
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="w-full gap-1.5 sm:w-auto"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    下载
-                  </Button>
-                </a>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <DownloadResultCard
+          rows={[
+            ...(downloadUrls.crx
+              ? [
+                  {
+                    icon: Package,
+                    title: `${extensionInfo?.id}.crx`,
+                    description: "Chrome 原生扩展格式",
+                    href: downloadUrls.crx,
+                    download: `${extensionInfo?.id}.crx`,
+                    testId: "chrome-download-crx-link",
+                  } satisfies DownloadResultRow,
+                ]
+              : []),
+            ...(downloadUrls.zip
+              ? [
+                  {
+                    icon: FileArchive,
+                    title: `${extensionInfo?.id}.zip`,
+                    description: "解压后可查看源码",
+                    href: downloadUrls.zip,
+                    download: `${extensionInfo?.id}.zip`,
+                    testId: "chrome-download-zip-link",
+                  } satisfies DownloadResultRow,
+                ]
+              : []),
+          ]}
+        />
       )}
     </form>
   );

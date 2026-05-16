@@ -7,9 +7,10 @@ import {
 import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
 import { Card, CardContent } from "@/shared/ui/card";
+import { DownloadResultCard } from "@/shared/ui/download-result-card";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import { useMemo, useState } from "react";
-import { Download, Package, ExternalLink } from "lucide-react";
+import { Package, ExternalLink } from "lucide-react";
 import { useMSStoreDownloader } from "../hooks/useMSStoreDownloader";
 import { MSStoreDownloadFile } from "../types";
 import { getMSStoreDownloadHref } from "../download";
@@ -293,68 +294,51 @@ export default function MSStoreDownloader({
       {result && (
         <>
           {fileEntries.length > 0 ? (
-            <Card className="border border-emerald-500/35 bg-emerald-500/10 shadow-apple">
-              <CardContent className="p-4 sm:p-5 space-y-3">
-                <div className="rounded-apple border border-border/60 bg-background/70 p-3 shadow-apple-button">
-                  <p className="mb-3 text-[11px] font-medium tracking-[0.08em] text-muted-foreground/80">
-                    选择文件
-                  </p>
-                  <SearchableSelect
-                    value={selectedFileName}
-                    options={fileOptions}
-                    placeholder="选择下载文件"
-                    onValueChange={setSelectedFileNameOverride}
-                  />
-                </div>
+            <>
+              <div className="rounded-apple-lg border border-border/60 bg-background/70 p-3 shadow-apple-button sm:p-4">
+                <p className="mb-3 text-[11px] font-medium tracking-[0.08em] text-muted-foreground/80">
+                  选择文件
+                </p>
+                <SearchableSelect
+                  value={selectedFileName}
+                  options={fileOptions}
+                  placeholder="选择下载文件"
+                  onValueChange={setSelectedFileNameOverride}
+                />
+              </div>
 
-                {selectedFile ? (
-                  <div className="rounded-md border border-border/60 bg-background/60 p-4 sm:p-5">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-start gap-3 min-w-0 sm:items-center">
-                        <div className="flex-shrink-0 w-9 h-9 rounded-apple-sm bg-primary/10 flex items-center justify-center">
-                          <Package className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground break-all">
-                            {selectedFileEntry?.parsed?.component ??
-                              selectedFile.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5 break-all">
+              {selectedFile ? (
+                <DownloadResultCard
+                  rows={[
+                    {
+                      icon: Package,
+                      title:
+                        selectedFileEntry?.parsed?.component ??
+                        selectedFile.name,
+                      description: (
+                        <>
+                          <p className="mt-0.5 break-all">
                             {selectedFileEntry?.parsed
                               ? `${selectedFileEntry.parsed.typeLabel} · ${selectedFileEntry.parsed.architectureLabel} · v${selectedFileEntry.parsed.version}`
                               : "安装包"}{" "}
                             · {selectedFile.size}
                           </p>
-                          <p className="text-[11px] text-muted-foreground/90 mt-1 break-all">
+                          <p className="mt-1 break-all text-[11px] text-muted-foreground/90">
                             {selectedFile.name}
                           </p>
-                          <p className="text-[11px] text-muted-foreground/90 mt-1 break-all">
+                          <p className="mt-1 break-all text-[11px] text-muted-foreground/90">
                             哈希: {selectedFile.sha1 || "-"}
                           </p>
-                        </div>
-                      </div>
-                      <a
-                        href={selectedFileDownloadHref}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="w-full flex-shrink-0 sm:w-auto"
-                        data-testid="msstore-download-link"
-                      >
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="w-full gap-1.5 sm:w-auto"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          下载
-                        </Button>
-                      </a>
-                    </div>
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
+                        </>
+                      ),
+                      href: selectedFileDownloadHref,
+                      external: true,
+                      testId: "msstore-download-link",
+                    },
+                  ]}
+                />
+              ) : null}
+            </>
           ) : null}
 
           {result.filesError ? (
