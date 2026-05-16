@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.4](https://github.com/LiaoGuoYin/lixian.online/compare/lixian-online-v0.5.3...lixian-online-v0.5.4) (2026-05-16)
+
+
+### Features
+
+* **docker:** docker/compose self hosting support and unified DownloadResultCard AIO ([7f9dc02](https://github.com/LiaoGuoYin/lixian.online/commit/7f9dc02f5e5327f587315396a89f7d577af09ea3))
+
+
+### Refactor
+
+* **ui:** extract shared DownloadResultCard for all feature panels ([68b7adb](https://github.com/LiaoGuoYin/lixian.online/commit/68b7adb8ff50b25226ad13a2ec82630b6a1f9e62))
+
 ## [0.5.3](https://github.com/LiaoGuoYin/lixian.online/compare/lixian-online-v0.5.2...lixian-online-v0.5.3) (2026-04-22)
 
 
