@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/shared/ui/card";
 import { Github } from "lucide-react";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import { site } from "@/shared/lib/site";
+import { ThemeToggle } from "@/shared/ui/theme-toggle";
 import {
   featureTabs,
   type DownloaderProps,
@@ -151,15 +152,18 @@ export default function TabPage({ tab }: Props) {
           >
             版本 v{APP_VERSION}
           </p>
-          <a
-            href={site.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
-          >
-            <Github className="h-3.5 w-3.5" />
-            GitHub
-          </a>
+          <div className="flex items-center justify-center gap-3">
+            <a
+              href={site.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+            >
+              <Github className="h-3.5 w-3.5" />
+              GitHub
+            </a>
+            <ThemeToggle />
+          </div>
         </footer>
       </div>
     </main>
