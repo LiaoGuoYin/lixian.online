@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.5](https://github.com/LiaoGuoYin/lixian.online/compare/lixian-online-v0.5.4...lixian-online-v0.5.5) (2026-05-24)
+
+
+### Features
+
+* **docker:** improve keyword-not-found UX with selectable candidates ([f3200d7](https://github.com/LiaoGuoYin/lixian.online/commit/f3200d7ab3ca75043facba49c7e23939de6e811d))
+* **docker:** improve keyword-not-found UX with selectable candidates ([a4fa1d8](https://github.com/LiaoGuoYin/lixian.online/commit/a4fa1d8e7fcd8815954754d2e5ce21680c67de14))
+
 ## [0.5.4](https://github.com/LiaoGuoYin/lixian.online/compare/lixian-online-v0.5.3...lixian-online-v0.5.4) (2026-05-16)
 
 
