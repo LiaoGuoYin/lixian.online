@@ -53,6 +53,7 @@ export default function DockerDownloader({
     availablePlatforms,
     selectedPlatform,
     onImageUrlChange,
+    selectSearchCandidate,
     onTagChange,
     onPlatformChange,
     handleSubmit,
@@ -105,7 +106,7 @@ export default function DockerDownloader({
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-3">
         <p className="text-xs text-muted-foreground">
-          输入镜像名，或前往{" "}
+          输入完整镜像名或 Docker Hub 仓库链接。仅输入关键词会按默认命名空间解析，或前往{" "}
           <a
             href="https://hub.docker.com/search"
             target="_blank"
@@ -118,7 +119,7 @@ export default function DockerDownloader({
         </p>
         <InputWithHistory
           data-testid="docker-input"
-          placeholder="nginx:latest 或 hub.docker.com/r/library/nginx"
+          placeholder="镜像名或 Docker Hub 仓库链接"
           value={imageUrl}
           onChange={onImageUrlChange}
           history={history.items}
@@ -132,6 +133,7 @@ export default function DockerDownloader({
           {[
             { label: "Nginx", value: "nginx:latest" },
             { label: "Redis", value: "redis:alpine" },
+            { label: "Kafka", value: "apache/kafka" },
           ].map((example) => (
             <button
               key={example.label}
@@ -210,6 +212,14 @@ export default function DockerDownloader({
               未找到对应镜像：{imageInfo.namespace || "library"}/
               {imageInfo.repository}
             </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Docker 镜像不能按关键词直接解析。当前输入已按{" "}
+              <span className="font-mono">
+                {imageInfo.namespace || "library"}/{imageInfo.repository}
+              </span>{" "}
+              查找；如果你要找社区镜像，请从候选项选择，或输入类似{" "}
+              <span className="font-mono">apache/kafka</span> 的完整名称。
+            </p>
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <a
                 href={dockerService.getDockerHubSearchUrl(
@@ -243,17 +253,11 @@ export default function DockerDownloader({
                 </p>
                 <div className="space-y-2">
                   {searchCandidates.map((candidate) => (
-                    <a
+                    <div
                       key={`${candidate.namespace}/${candidate.repository}`}
-                      href={dockerService.getDockerHubRepoUrl(
-                        candidate.namespace,
-                        candidate.repository,
-                      )}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block rounded-md border border-border/60 p-3 hover:bg-secondary/60 transition-colors"
+                      className="rounded-md border border-border/60 p-3 transition-colors hover:bg-secondary/60"
                     >
-                      <div className="flex items-start justify-between gap-3 sm:items-center">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground break-all sm:truncate">
                             {candidate.namespace}/{candidate.repository}
@@ -264,9 +268,30 @@ export default function DockerDownloader({
                             </p>
                           )}
                         </div>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <div className="flex shrink-0 items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => selectSearchCandidate(candidate)}
+                            data-testid={`docker-candidate-${candidate.namespace}-${candidate.repository}`}
+                          >
+                            选择
+                          </Button>
+                          <a
+                            href={dockerService.getDockerHubRepoUrl(
+                              candidate.namespace,
+                              candidate.repository,
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-apple-sm text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                            aria-label={`打开 ${candidate.namespace}/${candidate.repository} 的 Docker Hub 页面`}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </div>
                       </div>
-                    </a>
+                    </div>
                   ))}
                 </div>
               </div>

@@ -27,6 +27,13 @@ const dockerLayerGzip = gzipSync(Buffer.alloc(1024));
 
 type MockDockerOptions = {
   includeInvalidLayer?: boolean;
+  missingImages?: string[];
+  searchResults?: Array<{
+    repo_name: string;
+    short_description?: string;
+    star_count?: number;
+    pull_count?: number;
+  }>;
 };
 
 function fulfillJson(route: Route, data: unknown, status = 200) {
@@ -128,8 +135,23 @@ export async function mockEdgeApis(page: Page) {
 
 export async function mockDockerApis(page: Page, options: MockDockerOptions = {}) {
   await page.route("**/api/docker/tags**", async (route) => {
+    const url = new URL(route.request().url(), "http://localhost");
+    const namespace = url.searchParams.get("namespace") || "library";
+    const repository = url.searchParams.get("repository") || "";
+
+    if (options.missingImages?.includes(`${namespace}/${repository}`)) {
+      await fulfillJson(route, { error: "not found" }, 404);
+      return;
+    }
+
     await fulfillJson(route, {
       results: [{ name: "latest" }, { name: "alpine" }],
+    });
+  });
+
+  await page.route("**/api/docker/search**", async (route) => {
+    await fulfillJson(route, {
+      results: options.searchResults ?? [],
     });
   });
 
