@@ -81,9 +81,17 @@ class DockerService {
       
       return tags;
     } catch (error) {
-      const serverMessage = (error as { response?: { data?: { error?: string } } })
-        ?.response?.data?.error;
-      if (serverMessage) throw new Error(serverMessage);
+      const response = (error as {
+        response?: { status?: number; data?: { error?: string } };
+      })?.response;
+      const serverMessage = response?.data?.error;
+      if (serverMessage) {
+        const enrichedError = new Error(serverMessage) as Error & {
+          response?: typeof response;
+        };
+        enrichedError.response = response;
+        throw enrichedError;
+      }
       throw error;
     }
   }

@@ -3,10 +3,23 @@ import { dockerService } from "../api/DockerService";
 import { DockerImageInfo, DockerManifest, DockerPlatform, DockerDownloadProgress, DockerSearchCandidate } from "../types";
 import { get } from "@/shared/lib/http";
 
-const IMAGE_NOT_FOUND_MESSAGE = "未找到对应镜像，请检查名称或从候选镜像中选择";
-
 function formatPlatform(p: DockerPlatform): string {
   return p.variant ? `${p.os}/${p.architecture}/${p.variant}` : `${p.os}/${p.architecture}`;
+}
+
+function formatImageRef(info: DockerImageInfo | null): string {
+  if (!info?.repository) return "当前输入";
+  return `${info.namespace || "library"}/${info.repository}`;
+}
+
+function getImageNotFoundMessage(
+  info: DockerImageInfo | null,
+  hasCandidates: boolean,
+): string {
+  const nextAction = hasCandidates
+    ? "请从下方候选镜像中选择。"
+    : "请前往 Docker Hub 搜索并输入完整 namespace/repository。";
+  return `未找到 ${formatImageRef(info)}。Docker 输入需要完整镜像名，例如 apache/kafka；${nextAction}`;
 }
 
 export function useDockerDownloader(initialValue?: string) {
@@ -55,8 +68,7 @@ export function useDockerDownloader(initialValue?: string) {
     }
   }, []);
 
-  const onImageUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newUrl = e.target.value;
+  const setImageInput = useCallback((newUrl: string) => {
     setImageUrl(newUrl);
     setImageInfo(null);
     setTagList([]);
@@ -69,6 +81,20 @@ export function useDockerDownloader(initialValue?: string) {
     setSelectedPlatform("");
     selectedPlatformRef.current = "";
   }, []);
+
+  const onImageUrlChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setImageInput(e.target.value);
+    },
+    [setImageInput],
+  );
+
+  const selectSearchCandidate = useCallback(
+    (candidate: DockerSearchCandidate) => {
+      setImageInput(`${candidate.namespace}/${candidate.repository}`);
+    },
+    [setImageInput],
+  );
 
   const onTagChange = useCallback(
     (value: string) => {
@@ -116,6 +142,7 @@ export function useDockerDownloader(initialValue?: string) {
     setImageNotFound(true);
     const candidates = await dockerService.searchImages(searchKeyword, 5);
     setSearchCandidates(candidates);
+    return candidates;
   }, []);
 
   const handleSubmit = useCallback(
@@ -139,8 +166,10 @@ export function useDockerDownloader(initialValue?: string) {
 
           if (!tags.length) {
             const searchKeyword = extracted.repository || imageUrl;
-            await handleImageNotFound(searchKeyword);
-            throw new Error(IMAGE_NOT_FOUND_MESSAGE);
+            const candidates = await handleImageNotFound(searchKeyword);
+            throw new Error(
+              getImageNotFoundMessage(extracted, candidates.length > 0),
+            );
           }
 
           setTagList(tags);
@@ -169,8 +198,10 @@ export function useDockerDownloader(initialValue?: string) {
         const axiosError = error as { response?: { status?: number } };
         if (axiosError?.response?.status === 404) {
           const searchKeyword = extracted?.repository || imageUrl;
-          await handleImageNotFound(searchKeyword);
-          throw new Error(IMAGE_NOT_FOUND_MESSAGE);
+          const candidates = await handleImageNotFound(searchKeyword);
+          throw new Error(
+            getImageNotFoundMessage(extracted, candidates.length > 0),
+          );
         }
         throw error;
       } finally {
@@ -308,6 +339,7 @@ export function useDockerDownloader(initialValue?: string) {
     availablePlatforms,
     selectedPlatform,
     onImageUrlChange,
+    selectSearchCandidate,
     onTagChange,
     onPlatformChange,
     handleSubmit,

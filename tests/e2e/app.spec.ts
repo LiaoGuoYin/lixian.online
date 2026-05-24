@@ -205,6 +205,40 @@ test("Docker flow supports ARM architecture selection", async ({ page }) => {
   );
 });
 
+test("Docker flow explains keyword-like image parse failures and lets users pick a candidate", async ({
+  page,
+}) => {
+  await mockDockerApis(page, {
+    missingImages: ["library/kafka"],
+    searchResults: [
+      {
+        repo_name: "apache/kafka",
+        short_description: "Apache Kafka is an open-source event streaming platform.",
+        star_count: 1234,
+        pull_count: 123456,
+      },
+    ],
+  });
+
+  await page.goto("/");
+  await page.getByTestId("tab-docker").click();
+
+  await page.getByTestId("docker-input").fill("kafka");
+  await page.getByTestId("docker-submit").click();
+
+  await expect(page.getByText("未找到对应镜像：library/kafka")).toBeVisible();
+  await expect(
+    page.getByText(/Docker 镜像不能按关键词直接解析/),
+  ).toBeVisible();
+  await expect(page.getByTestId("docker-candidate-apache-kafka")).toBeVisible();
+
+  await page.getByTestId("docker-candidate-apache-kafka").click();
+  await expect(page.getByTestId("docker-input")).toHaveValue("apache/kafka");
+
+  await page.getByTestId("docker-submit").click();
+  await expect(page.getByText("选择版本")).toBeVisible();
+});
+
 test("MSStore flow renders a download link from a store URL", async ({
   page,
 }) => {
