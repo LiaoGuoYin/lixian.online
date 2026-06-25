@@ -3,16 +3,20 @@ import { Button } from "@/shared/ui/button";
 import { SearchableSelect } from "@/shared/ui/searchable-select";
 import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
-import { Card, CardContent } from "@/shared/ui/card";
 import { DownloadResultCard } from "@/shared/ui/download-result-card";
+import { FeatureWorkspace } from "@/shared/ui/feature-workspace";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
+import { ProgressCard } from "@/shared/ui/progress-card";
+import { buildAgentPayload, buildAgentPrompt } from "@/shared/lib/agent-prompts";
+import { DockerIcon } from "@/shared/ui/icons";
 import {
   Download,
   Archive,
   Search,
   ExternalLink,
-  Layers,
   Cpu,
+  HardDrive,
+  Package,
 } from "lucide-react";
 import { useDockerDownloader } from "../hooks/useDockerDownloader";
 import { dockerService } from "../api/DockerService";
@@ -59,6 +63,12 @@ export default function DockerDownloader({
     handleSubmit,
     handleDownload,
   } = useDockerDownloader(defaultValue);
+  const agentPrompt = buildAgentPrompt({
+    tool: "docker",
+    label: "Docker 镜像",
+    query: imageUrl,
+  });
+  const agentInputReady = Boolean(imageUrl.trim());
 
   const onSubmit = async (e: React.FormEvent) => {
     try {
@@ -103,77 +113,86 @@ export default function DockerDownloader({
       : 0;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          输入完整镜像名或 Docker Hub 仓库链接。仅输入关键词会按默认命名空间解析，或前往{" "}
-          <a
-            href="https://hub.docker.com/search"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-0.5 text-primary hover:underline"
-          >
-            Docker Hub
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        </p>
-        <InputWithHistory
-          data-testid="docker-input"
-          placeholder="镜像名或 Docker Hub 仓库链接"
-          value={imageUrl}
-          onChange={onImageUrlChange}
-          history={history.items}
-          onSelectHistory={(v) =>
-            onImageUrlChange({
-              target: { value: v },
-            } as React.ChangeEvent<HTMLInputElement>)
-          }
-        />
-        <div className="mt-1 flex flex-wrap gap-2">
-          {[
-            { label: "Nginx", value: "nginx:latest" },
-            { label: "Redis", value: "redis:alpine" },
-            { label: "Kafka", value: "apache/kafka" },
-          ].map((example) => (
-            <button
-              key={example.label}
-              type="button"
-              onClick={() =>
-                onImageUrlChange({
-                  target: { value: example.value },
-                } as React.ChangeEvent<HTMLInputElement>)
-              }
-              className="rounded-full bg-background px-2.5 py-1 text-xs text-muted-foreground shadow-apple-button transition-colors hover:bg-secondary hover:text-foreground"
+    <FeatureWorkspace
+      icon={DockerIcon}
+      title="Docker 镜像离线包"
+      description="解析镜像标签和平台，将层数据打成 docker load 可导入的 TAR。"
+      agentPrompt={agentPrompt}
+      agentPayload={buildAgentPayload("docker", imageUrl)}
+      agentInputReady={agentInputReady}
+      agentInputHint="镜像名、tag 或 Docker Hub URL"
+    >
+      <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>Image ref / Docker Hub URL</span>
+            <a
+              href="https://hub.docker.com/search"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-primary hover:underline"
             >
-              试试 {example.label}
-            </button>
-          ))}
+              Docker Hub
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+          <InputWithHistory
+            data-testid="docker-input"
+            placeholder="镜像名或 Docker Hub 仓库链接"
+            value={imageUrl}
+            onChange={onImageUrlChange}
+            history={history.items}
+            onSelectHistory={(v) =>
+              onImageUrlChange({
+                target: { value: v },
+              } as React.ChangeEvent<HTMLInputElement>)
+            }
+          />
+          <div className="mt-1 flex flex-wrap gap-2">
+            {[
+              { label: "Nginx", value: "nginx:latest" },
+              { label: "Redis", value: "redis:alpine" },
+              { label: "Kafka", value: "apache/kafka" },
+            ].map((example) => (
+              <button
+                key={example.label}
+                type="button"
+                onClick={() =>
+                  onImageUrlChange({
+                    target: { value: example.value },
+                  } as React.ChangeEvent<HTMLInputElement>)
+                }
+                className="rounded-apple-sm bg-background px-2.5 py-1 text-xs text-muted-foreground shadow-apple-button transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                试试 {example.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <Button
-        type="submit"
-        disabled={loading}
-        className="w-full"
-        data-testid="docker-submit"
-      >
-        {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <LoadingSpinner />
-            解析中...
-          </span>
-        ) : (
-          <span className="flex items-center justify-center gap-2">
-            解析镜像信息
-          </span>
-        )}
-      </Button>
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full"
+          data-testid="docker-submit"
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <LoadingSpinner />
+              解析中...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              解析镜像信息
+            </span>
+          )}
+        </Button>
 
       {tagList.length > 0 && (
-        <div className="rounded-apple-lg border border-border/60 bg-background/70 p-3 shadow-apple-button sm:p-4">
+        <div className="rounded-apple-sm border border-border/60 bg-background/70 p-3 shadow-apple-button sm:p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="min-w-0 flex-1">
-              <p className="mb-2 text-[11px] font-medium tracking-[0.08em] text-muted-foreground/80">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">
                 选择版本
               </p>
               <SearchableSelect
@@ -187,7 +206,7 @@ export default function DockerDownloader({
               <div className="min-w-0 sm:w-48">
                 <div className="mb-2 flex items-center gap-1">
                   <Cpu className="h-3 w-3 text-muted-foreground/80" />
-                  <p className="text-[11px] font-medium tracking-[0.08em] text-muted-foreground/80">
+                  <p className="text-xs font-medium text-muted-foreground">
                     架构
                   </p>
                 </div>
@@ -206,13 +225,13 @@ export default function DockerDownloader({
       )}
 
       {imageNotFound && imageInfo && (
-        <Card className="border border-destructive/30 bg-destructive/5">
-          <CardContent className="p-5 space-y-3">
-            <div className="text-sm text-destructive font-medium">
-              未找到对应镜像：{imageInfo.namespace || "library"}/
-              {imageInfo.repository}
-            </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">
+        <DownloadResultCard
+          title={`未找到对应镜像：${imageInfo.namespace || "library"}/${
+            imageInfo.repository
+          }`}
+          eyebrow="Docker"
+          description={
+            <p>
               Docker 镜像不能按关键词直接解析。当前输入已按{" "}
               <span className="font-mono">
                 {imageInfo.namespace || "library"}/{imageInfo.repository}
@@ -220,32 +239,36 @@ export default function DockerDownloader({
               查找；如果你要找社区镜像，请从候选项选择，或输入类似{" "}
               <span className="font-mono">apache/kafka</span> 的完整名称。
             </p>
-            <div className="flex flex-wrap items-center gap-3 text-xs">
-              <a
-                href={dockerService.getDockerHubSearchUrl(
-                  imageInfo.repository || imageUrl,
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-primary hover:underline"
-              >
-                <Search className="h-3.5 w-3.5" />
-                前往 DockerHub 搜索
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-              <a
-                href={dockerService.getDockerHubRepoUrl(
-                  imageInfo.namespace || "library",
-                  imageInfo.repository,
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-primary hover:underline"
-              >
-                预览当前仓库页
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </div>
+          }
+          className="border-destructive/30 bg-destructive/5"
+          footer={
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <a
+                  href={dockerService.getDockerHubSearchUrl(
+                    imageInfo.repository || imageUrl,
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-primary hover:underline"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  前往 DockerHub 搜索
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+                <a
+                  href={dockerService.getDockerHubRepoUrl(
+                    imageInfo.namespace || "library",
+                    imageInfo.repository,
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-primary hover:underline"
+                >
+                  预览当前仓库页
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
             {searchCandidates.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
@@ -255,7 +278,7 @@ export default function DockerDownloader({
                   {searchCandidates.map((candidate) => (
                     <div
                       key={`${candidate.namespace}/${candidate.repository}`}
-                      className="rounded-md border border-border/60 p-3 transition-colors hover:bg-secondary/60"
+                      className="rounded-apple-sm border border-border/60 bg-background/70 p-3 transition-colors hover:bg-secondary/60"
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="min-w-0">
@@ -296,30 +319,48 @@ export default function DockerDownloader({
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+            </div>
+          }
+        />
       )}
 
       {tagList.length > 0 && imageInfo?.tag && (
         <div className="space-y-4">
           {/* Layer sizes */}
           {manifestLoading && (
-            <Card className="border border-border/70 bg-secondary/40 shadow-apple">
-              <CardContent className="p-4 sm:p-5">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <LoadingSpinner />
-                  获取层信息...
-                </div>
-              </CardContent>
-            </Card>
+            <div className="rounded-apple-sm border border-border/70 bg-card/95 p-4 shadow-apple sm:p-5">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <LoadingSpinner />
+                获取层信息...
+              </div>
+            </div>
           )}
           {manifest && manifest.layers.length > 0 && (
-            <Card className="border border-border/70 bg-secondary/40 shadow-apple">
-              <CardContent className="p-4 sm:p-5 space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Layers className="h-4 w-4 text-primary" />
-                  镜像层（{manifest.layers.length} 层）
-                </div>
+            <DownloadResultCard
+              title={`镜像层（${manifest.layers.length} 层）`}
+              eyebrow="Manifest"
+              metadata={[
+                {
+                  icon: Package,
+                  label: "镜像",
+                  value: `${imageInfo.namespace || "library"}/${
+                    imageInfo.repository
+                  }:${imageInfo.tag}`,
+                },
+                {
+                  icon: Cpu,
+                  label: "平台",
+                  value: selectedPlatform || "single-arch",
+                },
+                {
+                  icon: HardDrive,
+                  label: "总计（压缩）",
+                  value: formatBytes(
+                    manifest.layers.reduce((s, l) => s + l.size, 0),
+                  ),
+                },
+              ]}
+              footer={
                 <div className="space-y-1.5">
                   {manifest.layers.map((layer, i) => (
                     <div
@@ -335,16 +376,8 @@ export default function DockerDownloader({
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-between text-sm font-medium text-foreground border-t border-border/60 pt-2">
-                  <span>总计（压缩）</span>
-                  <span className="tabular-nums">
-                    {formatBytes(
-                      manifest.layers.reduce((s, l) => s + l.size, 0),
-                    )}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+              }
+            />
           )}
 
           <Button
@@ -370,45 +403,33 @@ export default function DockerDownloader({
       )}
 
       {downloadProgress && downloadProgress.status !== "completed" && (
-        <Card className="border border-border/70 bg-secondary/40 shadow-apple">
-          <CardContent className="p-4 sm:p-5">
-            <div className="space-y-3">
-              <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-foreground font-medium">
-                  {downloadProgress.status === "downloading"
-                    ? `下载中... 第 ${downloadProgress.layerIndex}/${downloadProgress.totalLayers} 层`
-                    : downloadProgress.status === "packing"
-                      ? "打包中..."
-                      : "下载出错"}
-                </span>
-                {downloadProgress.status === "downloading" &&
-                  downloadProgress.totalSize > 0 && (
-                    <span className="text-xs text-muted-foreground tabular-nums sm:text-sm">
-                      {formatBytes(
-                        downloadProgress.downloadedSize +
-                          downloadProgress.currentLayerDownloaded,
-                      )}{" "}
-                      / {formatBytes(downloadProgress.totalSize)}
-                    </span>
-                  )}
-              </div>
-              <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
-                <div
-                  className="bg-primary h-full rounded-full transition-all duration-150 ease-out"
-                  style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                />
-              </div>
-              {downloadProgress.status === "downloading" &&
-                downloadProgress.currentLayerSize > 0 && (
-                  <div className="text-xs text-muted-foreground tabular-nums">
-                    当前层:{" "}
-                    {formatBytes(downloadProgress.currentLayerDownloaded)} /{" "}
-                    {formatBytes(downloadProgress.currentLayerSize)}
-                  </div>
-                )}
-            </div>
-          </CardContent>
-        </Card>
+        <ProgressCard
+          title={
+            downloadProgress.status === "downloading"
+              ? `下载中... 第 ${downloadProgress.layerIndex}/${downloadProgress.totalLayers} 层`
+              : downloadProgress.status === "packing"
+                ? "打包中..."
+                : "下载出错"
+          }
+          value={
+            downloadProgress.status === "downloading" &&
+            downloadProgress.totalSize > 0
+              ? `${formatBytes(
+                  downloadProgress.downloadedSize +
+                    downloadProgress.currentLayerDownloaded,
+                )} / ${formatBytes(downloadProgress.totalSize)}`
+              : undefined
+          }
+          progress={progressPercent}
+          detail={
+            downloadProgress.status === "downloading" &&
+            downloadProgress.currentLayerSize > 0
+              ? `当前层: ${formatBytes(
+                  downloadProgress.currentLayerDownloaded,
+                )} / ${formatBytes(downloadProgress.currentLayerSize)}`
+              : undefined
+          }
+        />
       )}
 
       {downloadProgress?.status === "completed" &&
@@ -435,6 +456,7 @@ export default function DockerDownloader({
             />
           );
         })()}
-    </form>
+      </form>
+    </FeatureWorkspace>
   );
 }

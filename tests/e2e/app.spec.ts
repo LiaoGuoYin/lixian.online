@@ -68,6 +68,63 @@ test("Chrome flow prepares CRX and ZIP downloads", async ({ page }) => {
   );
 });
 
+test("Agent panel waits for a real query before copyable prompt/API", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByTestId("tab-chrome").click();
+
+  const chromePanel = page.getByTestId("panel-chrome");
+  const emptyState = chromePanel.getByTestId("agent-empty-state");
+
+  await expect(emptyState).toBeVisible();
+  await expect(emptyState).toContainText("需要输入查询内容");
+  await expect(emptyState).toContainText("扩展名称、ID 或 Web Store URL");
+  await expect(chromePanel.getByTestId("agent-prompt-copy")).toBeDisabled();
+  await expect(chromePanel.getByTestId("agent-api-copy")).toBeDisabled();
+  await expect(chromePanel.getByTestId("agent-prompt-content")).toHaveCount(
+    0,
+  );
+  await expect(page.getByText("<input>")).toHaveCount(0);
+
+  await page.evaluate(() => {
+    const targetWindow = window as Window & { __copiedText?: string };
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          targetWindow.__copiedText = text;
+        },
+      },
+    });
+  });
+
+  await page.getByTestId("chrome-input").fill(chromeExtensionId);
+
+  const prompt = chromePanel.getByTestId("agent-prompt-content");
+  await expect(prompt).toBeVisible();
+  await expect(prompt).toContainText("Chrome 扩展");
+  await expect(prompt).toContainText(chromeExtensionId);
+  await expect(prompt).toContainText(
+    "POST http://127.0.0.1:3100/api/agent/parse",
+  );
+  await expect(prompt).toHaveCSS("max-height", "none");
+  await expect(prompt).toHaveCSS("overflow-y", "visible");
+  await expect(chromePanel.getByTestId("agent-prompt-copy")).toBeEnabled();
+  await expect(chromePanel.getByTestId("agent-api-copy")).toBeEnabled();
+
+  await chromePanel.getByTestId("agent-api-copy").click();
+  const copiedText = await page.evaluate(
+    () =>
+      (window as Window & { __copiedText?: string }).__copiedText ?? "",
+  );
+  expect(copiedText).toContain(
+    "curl -X POST http://127.0.0.1:3100/api/agent/parse",
+  );
+  expect(copiedText).toContain(`"query": "${chromeExtensionId}"`);
+  expect(copiedText).not.toContain("<input>");
+});
+
 test("Edge flow resolves a store URL and prepares CRX and ZIP downloads", async ({
   page,
 }) => {

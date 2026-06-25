@@ -6,11 +6,13 @@ import {
 } from "@/shared/ui/searchable-select";
 import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
-import { Card, CardContent } from "@/shared/ui/card";
 import { DownloadResultCard } from "@/shared/ui/download-result-card";
+import { FeatureWorkspace } from "@/shared/ui/feature-workspace";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
+import { buildAgentPayload, buildAgentPrompt } from "@/shared/lib/agent-prompts";
+import { MicrosoftStoreIcon } from "@/shared/ui/icons";
 import { useMemo, useState } from "react";
-import { Package, ExternalLink } from "lucide-react";
+import { Building2, Files, Fingerprint, Globe, Package, ExternalLink } from "lucide-react";
 import { useMSStoreDownloader } from "../hooks/useMSStoreDownloader";
 import { MSStoreDownloadFile } from "../types";
 import { getMSStoreDownloadHref } from "../download";
@@ -211,6 +213,12 @@ export default function MSStoreDownloader({
   const selectedFileDownloadHref = selectedFile
     ? getMSStoreDownloadHref(selectedFile)
     : "";
+  const agentPrompt = buildAgentPrompt({
+    tool: "msstore",
+    label: "Microsoft Store 应用",
+    query,
+  });
+  const agentInputReady = Boolean(query.trim());
 
   const onSubmit = async (e: React.FormEvent) => {
     try {
@@ -231,72 +239,81 @@ export default function MSStoreDownloader({
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          输入 MS 应用链接，或前往
-          <a
-            href="https://apps.microsoft.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-1 inline-flex items-center gap-0.5 text-primary hover:underline"
-          >
-            Microsoft Store
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        </p>
-        <InputWithHistory
-          data-testid="msstore-input"
-          className="h-12"
-          placeholder={placeholder}
-          value={query}
-          onChange={onQueryChange}
-          history={history.items}
-          onSelectHistory={(value) =>
-            onQueryChange({
-              target: { value },
-            } as React.ChangeEvent<HTMLInputElement>)
-          }
-        />
-
-        <div className="mt-1 flex flex-wrap gap-2">
-          {examples.map((example) => (
-            <button
-              key={example.value}
-              type="button"
-              onClick={() => fillExample(example.value)}
-              className="rounded-full bg-background px-2.5 py-1 text-xs text-muted-foreground shadow-apple-button transition-colors hover:bg-secondary hover:text-foreground"
+    <FeatureWorkspace
+      icon={MicrosoftStoreIcon}
+      title="Microsoft Store 安装包"
+      description="解析 Store 标识，展示可下载的 MSIX、APPX 或 Bundle 文件。"
+      agentPrompt={agentPrompt}
+      agentPayload={buildAgentPayload("msstore", query)}
+      agentInputReady={agentInputReady}
+      agentInputHint="Store URL、ProductId、PackageFamilyName 或 CategoryId"
+    >
+      <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>Store URL / ProductId</span>
+            <a
+              href="https://apps.microsoft.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-primary hover:underline"
             >
-              试试 {example.label}
-            </button>
-          ))}
-        </div>
-      </div>
+              Microsoft Store
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+          <InputWithHistory
+            data-testid="msstore-input"
+            className="h-12"
+            placeholder={placeholder}
+            value={query}
+            onChange={onQueryChange}
+            history={history.items}
+            onSelectHistory={(value) =>
+              onQueryChange({
+                target: { value },
+              } as React.ChangeEvent<HTMLInputElement>)
+            }
+          />
 
-      <Button
-        type="submit"
-        disabled={loading}
-        className="w-full"
-        data-testid="msstore-submit"
-      >
-        {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <LoadingSpinner />
-            解析中...
-          </span>
-        ) : (
-          <span className="flex items-center justify-center gap-2">
-            解析应用信息
-          </span>
-        )}
-      </Button>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {examples.map((example) => (
+              <button
+                key={example.value}
+                type="button"
+                onClick={() => fillExample(example.value)}
+                className="rounded-apple-sm bg-background px-2.5 py-1 text-xs text-muted-foreground shadow-apple-button transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                试试 {example.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full"
+          data-testid="msstore-submit"
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <LoadingSpinner />
+              解析中...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              解析应用信息
+            </span>
+          )}
+        </Button>
 
       {result && (
         <>
           {fileEntries.length > 0 ? (
             <>
-              <div className="rounded-apple-lg border border-border/60 bg-background/70 p-3 shadow-apple-button sm:p-4">
-                <p className="mb-3 text-[11px] font-medium tracking-[0.08em] text-muted-foreground/80">
+              <div className="rounded-apple-sm border border-border/60 bg-background/70 p-3 shadow-apple-button sm:p-4">
+                <p className="mb-3 text-xs font-medium text-muted-foreground">
                   选择文件
                 </p>
                 <SearchableSelect
@@ -309,6 +326,31 @@ export default function MSStoreDownloader({
 
               {selectedFile ? (
                 <DownloadResultCard
+                  title={result.title || "Microsoft Store 应用"}
+                  eyebrow="MSIX"
+                  description={result.description}
+                  metadata={[
+                    {
+                      icon: Building2,
+                      label: "发布者",
+                      value: result.publisherName || "-",
+                    },
+                    {
+                      icon: Fingerprint,
+                      label: "ProductId",
+                      value: result.productId,
+                    },
+                    {
+                      icon: Files,
+                      label: "文件",
+                      value: `${fileEntries.length} 个候选包`,
+                    },
+                    {
+                      icon: Globe,
+                      label: "市场",
+                      value: `${result.market} / ${result.language}`,
+                    },
+                  ]}
                   rows={[
                     {
                       icon: Package,
@@ -342,14 +384,13 @@ export default function MSStoreDownloader({
           ) : null}
 
           {result.filesError ? (
-            <Card className="border border-amber-500/30 bg-amber-500/5">
-              <CardContent className="p-4 text-xs text-amber-700 dark:text-amber-300">
-                下载列表解析失败: {result.filesError}
-              </CardContent>
-            </Card>
+            <div className="rounded-apple-sm border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-700 dark:text-amber-300">
+              下载列表解析失败: {result.filesError}
+            </div>
           ) : null}
         </>
       )}
-    </form>
+      </form>
+    </FeatureWorkspace>
   );
 }

@@ -2,20 +2,24 @@ import { InputWithHistory } from "@/shared/ui/input-with-history";
 import { Button } from "@/shared/ui/button";
 import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
-import { Card, CardContent } from "@/shared/ui/card";
 import {
   DownloadResultCard,
   type DownloadResultRow,
 } from "@/shared/ui/download-result-card";
+import { FeatureWorkspace } from "@/shared/ui/feature-workspace";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
+import { ProgressCard } from "@/shared/ui/progress-card";
+import { buildAgentPayload, buildAgentPrompt } from "@/shared/lib/agent-prompts";
+import { ChromeIcon } from "@/shared/ui/icons";
 import {
+  BadgeInfo,
   Download,
   FileArchive,
+  Fingerprint,
   Package,
   Search,
   Loader2,
   ExternalLink,
-  X,
 } from "lucide-react";
 import { useChromeDownloader } from "../hooks/useChromeDownloader";
 
@@ -44,6 +48,12 @@ export default function ChromeDownloader({
     handleDownload,
     cancelDownload,
   } = useChromeDownloader(defaultValue);
+  const agentPrompt = buildAgentPrompt({
+    tool: "chrome",
+    label: "Chrome 扩展",
+    query: extensionUrl,
+  });
+  const agentInputReady = Boolean(extensionUrl.trim());
 
   const onSubmit = async (e: React.FormEvent) => {
     try {
@@ -81,137 +91,139 @@ export default function ChromeDownloader({
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          输入名称搜索或直接粘贴 ID，或前往{" "}
-          <a
-            href="https://chromewebstore.google.com/category/extensions"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-0.5 text-primary hover:underline"
-          >
-            Chrome Store
-            <ExternalLink className="h-3 w-3" />
-          </a>{" "}
-        </p>
-        <InputWithHistory
-          data-testid="chrome-input"
-          placeholder="扩展名称、ID 或商店链接"
-          value={extensionUrl}
-          onChange={onUrlChange}
-          history={history.items}
-          onSelectHistory={(v) =>
-            onUrlChange({
-              target: { value: v },
-            } as React.ChangeEvent<HTMLInputElement>)
-          }
-        />
-        {searching && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            搜索中...
+    <FeatureWorkspace
+      icon={ChromeIcon}
+      title="Chrome 扩展离线包"
+      description="搜索或粘贴扩展 ID，下载 CRX 并在浏览器内转换 ZIP。"
+      agentPrompt={agentPrompt}
+      agentPayload={buildAgentPayload("chrome", extensionUrl)}
+      agentInputReady={agentInputReady}
+      agentInputHint="扩展名称、ID 或 Web Store URL"
+    >
+      <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>Extension ID / URL</span>
+            <a
+              href="https://chromewebstore.google.com/category/extensions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-primary hover:underline"
+            >
+              Chrome Store
+              <ExternalLink className="h-3 w-3" />
+            </a>
           </div>
-        )}
-        {searchResults.length > 0 && (
-          <div className="space-y-0.5 rounded-apple border border-border/70 bg-popover p-1 shadow-apple-button">
-            {searchResults.map((result) => (
+          <InputWithHistory
+            data-testid="chrome-input"
+            placeholder="扩展名称、ID 或商店链接"
+            value={extensionUrl}
+            onChange={onUrlChange}
+            history={history.items}
+            onSelectHistory={(v) =>
+              onUrlChange({
+                target: { value: v },
+              } as React.ChangeEvent<HTMLInputElement>)
+            }
+          />
+          {searching && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              搜索中...
+            </div>
+          )}
+          {searchResults.length > 0 && (
+            <div className="space-y-0.5 rounded-apple-sm border border-border/70 bg-popover p-1 shadow-apple-button">
+              {searchResults.map((result) => (
+                <button
+                  key={result.id}
+                  type="button"
+                  onClick={() => {
+                    selectSearchResult(result);
+                  }}
+                  className="flex w-full items-start gap-2.5 rounded-apple-sm px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-secondary sm:items-center"
+                >
+                  <Search className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 break-words sm:truncate">
+                    {result.name}
+                  </span>
+                  <span className="ml-auto hidden flex-shrink-0 text-xs text-muted-foreground sm:inline">
+                    {result.id.slice(0, 8)}…
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="mt-1 flex flex-wrap gap-2">
+            {[
+              {
+                label: "沉浸式翻译",
+                value: "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+              },
+              {
+                label: "篡改猴",
+                value: "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+              },
+            ].map((example) => (
               <button
-                key={result.id}
+                key={example.label}
                 type="button"
-                onClick={() => {
-                  selectSearchResult(result);
-                }}
-                className="flex w-full items-start gap-2.5 rounded-apple-sm px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-secondary sm:items-center"
+                onClick={() =>
+                  onUrlChange({
+                    target: { value: example.value },
+                  } as React.ChangeEvent<HTMLInputElement>)
+                }
+                className="rounded-apple-sm bg-background px-2.5 py-1 text-xs text-muted-foreground shadow-apple-button transition-colors hover:bg-secondary hover:text-foreground"
               >
-                <Search className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                <span className="min-w-0 flex-1 break-words sm:truncate">
-                  {result.name}
-                </span>
-                <span className="ml-auto hidden flex-shrink-0 text-xs text-muted-foreground sm:inline">
-                  {result.id.slice(0, 8)}…
-                </span>
+                试试 {example.label}
               </button>
             ))}
           </div>
-        )}
-        <div className="mt-1 flex flex-wrap gap-2">
-          {[
-            {
-              label: "沉浸式翻译",
-              value: "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
-            },
-            {
-              label: "篡改猴",
-              value: "dhdgffkkebhmkfjojejmpbldmpobfkfo",
-            },
-          ].map((example) => (
-            <button
-              key={example.label}
-              type="button"
-              onClick={() =>
-                onUrlChange({
-                  target: { value: example.value },
-                } as React.ChangeEvent<HTMLInputElement>)
-              }
-              className="rounded-full bg-background px-2.5 py-1 text-xs text-muted-foreground shadow-apple-button transition-colors hover:bg-secondary hover:text-foreground"
-            >
-              试试 {example.label}
-            </button>
-          ))}
         </div>
-      </div>
 
-      <Button
-        type="submit"
-        disabled={loading}
-        className="w-full"
-        data-testid="chrome-submit"
-      >
-        {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <LoadingSpinner />
-            解析中...
-          </span>
-        ) : (
-          <span className="flex items-center justify-center gap-2">
-            解析扩展信息
-          </span>
-        )}
-      </Button>
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full"
+          data-testid="chrome-submit"
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <LoadingSpinner />
+              解析中...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              解析扩展信息
+            </span>
+          )}
+        </Button>
 
-      {extensionInfo && (
-        <div className="space-y-4">
-          {/* Extension Info */}
-          <Card className="border border-border/70 bg-secondary/40 shadow-apple">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-start gap-3">
-                <div className="text-sm space-y-1 min-w-0">
-                  {extensionInfo.name && (
-                    <p className="break-words font-medium text-foreground">
-                      {extensionInfo.name}
-                    </p>
-                  )}
-                  {extensionInfo.version &&
-                    extensionInfo.version !== "Unknown" && (
-                      <p className="text-muted-foreground">
-                        版本: {extensionInfo.version}
-                      </p>
-                    )}
-                  {extensionInfo.description && (
-                    <p className="break-words text-muted-foreground">
-                      描述：{extensionInfo.description}
-                    </p>
-                  )}
-                  <p className="text-muted-foreground">
-                    ID: {extensionInfo.id}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {extensionInfo && (
+          <div className="space-y-4">
+            <DownloadResultCard
+              title={extensionInfo.name || "Chrome 扩展"}
+              eyebrow="CRX"
+              description={extensionInfo.description}
+              metadata={[
+                {
+                  icon: Fingerprint,
+                  label: "ID",
+                  value: extensionInfo.id,
+                },
+                ...(extensionInfo.version &&
+                extensionInfo.version !== "Unknown"
+                  ? [
+                      {
+                        icon: BadgeInfo,
+                        label: "版本",
+                        value: extensionInfo.version,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
 
-          {/* Download Buttons */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
             <Button
               type="button"
@@ -250,49 +262,29 @@ export default function ChromeDownloader({
       )}
 
       {downloadProgress && (
-        <Card className="border border-border/70 bg-secondary/40 shadow-apple">
-          <CardContent className="p-4 sm:p-5">
-            <div className="space-y-3">
-              <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-foreground font-medium">
-                  {downloadProgress.status === "downloading" && "下载中..."}
-                  {downloadProgress.status === "converting" && "转换中..."}
-                  {downloadProgress.status === "completed" && "下载完成"}
-                  {downloadProgress.status === "error" && "下载出错"}
-                </span>
-                <div className="flex items-center justify-between gap-2 sm:justify-end">
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {downloadProgress.totalBytes > 0
-                      ? `${(downloadProgress.bytesDownloaded / 1024 / 1024).toFixed(1)} / ${(downloadProgress.totalBytes / 1024 / 1024).toFixed(1)} MB`
-                      : `${Math.round(downloadProgress.progress)}%`}
-                  </span>
-                  {(downloadProgress.status === "downloading" ||
-                    downloadProgress.status === "converting") && (
-                    <button
-                      type="button"
-                      onClick={cancelDownload}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                      title="取消下载"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
-                <div
-                  className="bg-primary h-full rounded-full transition-all duration-300 ease-out"
-                  style={{ width: `${downloadProgress.progress}%` }}
-                />
-              </div>
-              {downloadProgress.error && (
-                <p className="text-xs text-destructive">
-                  {downloadProgress.error}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <ProgressCard
+          title={
+            <>
+              {downloadProgress.status === "downloading" && "下载中..."}
+              {downloadProgress.status === "converting" && "转换中..."}
+              {downloadProgress.status === "completed" && "下载完成"}
+              {downloadProgress.status === "error" && "下载出错"}
+            </>
+          }
+          value={
+            downloadProgress.totalBytes > 0
+              ? `${(downloadProgress.bytesDownloaded / 1024 / 1024).toFixed(1)} / ${(downloadProgress.totalBytes / 1024 / 1024).toFixed(1)} MB`
+              : `${Math.round(downloadProgress.progress)}%`
+          }
+          progress={downloadProgress.progress}
+          error={downloadProgress.error}
+          onCancel={
+            downloadProgress.status === "downloading" ||
+            downloadProgress.status === "converting"
+              ? cancelDownload
+              : undefined
+          }
+        />
       )}
 
       {(downloadUrls.crx || downloadUrls.zip) && (
@@ -325,6 +317,7 @@ export default function ChromeDownloader({
           ]}
         />
       )}
-    </form>
+      </form>
+    </FeatureWorkspace>
   );
 }

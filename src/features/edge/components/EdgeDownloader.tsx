@@ -2,21 +2,26 @@ import { InputWithHistory } from "@/shared/ui/input-with-history";
 import { Button } from "@/shared/ui/button";
 import { useToast } from "@/hooks/useToast";
 import { useHistory } from "@/hooks/useHistory";
-import { Card, CardContent } from "@/shared/ui/card";
 import {
   DownloadResultCard,
   type DownloadResultRow,
 } from "@/shared/ui/download-result-card";
+import { FeatureWorkspace } from "@/shared/ui/feature-workspace";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
+import { ProgressCard } from "@/shared/ui/progress-card";
+import { buildAgentPayload, buildAgentPrompt } from "@/shared/lib/agent-prompts";
+import { EdgeIcon } from "@/shared/ui/icons";
 import {
+  BadgeInfo,
   Download,
   ExternalLink,
   FileArchive,
+  Fingerprint,
   Loader2,
   Package,
   Search,
   Star,
-  X,
+  UserRound,
 } from "lucide-react";
 import { useEdgeDownloader } from "@/features/edge/hooks/useEdgeDownloader";
 
@@ -42,6 +47,12 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
     handleDownload,
     cancelDownload,
   } = useEdgeDownloader(defaultValue);
+  const agentPrompt = buildAgentPrompt({
+    tool: "msedge",
+    label: "Edge 扩展",
+    query: extensionQuery,
+  });
+  const agentInputReady = Boolean(extensionQuery.trim());
 
   const onSubmit = async (e: React.FormEvent) => {
     try {
@@ -84,147 +95,174 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
     extensionInfo?.shortDescription || extensionInfo?.description || "";
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          输入名称搜索，或直接粘贴 ID、ProductId、商店链接，或前往{" "}
-          <a
-            href="https://microsoftedge.microsoft.com/addons/Microsoft-Edge-Extensions-Home"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-0.5 text-primary hover:underline"
-          >
-            Edge Add-ons
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        </p>
-
-        <InputWithHistory
-          data-testid="edge-input"
-          placeholder="扩展名称、ID、ProductId 或商店链接"
-          value={extensionQuery}
-          onChange={onInputChange}
-          history={history.items}
-          onSelectHistory={(value) =>
-            onInputChange({
-              target: { value },
-            } as React.ChangeEvent<HTMLInputElement>)
-          }
-        />
-
-        {searching && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            搜索中...
+    <FeatureWorkspace
+      icon={EdgeIcon}
+      title="Edge 扩展离线包"
+      description="解析 Add-ons 链接、CRX ID 或 ProductId，输出 CRX 与 ZIP。"
+      agentPrompt={agentPrompt}
+      agentPayload={buildAgentPayload("msedge", extensionQuery)}
+      agentInputReady={agentInputReady}
+      agentInputHint="扩展名称、CRX ID、ProductId 或 Add-ons URL"
+    >
+      <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>Extension ID / ProductId / URL</span>
+            <a
+              href="https://microsoftedge.microsoft.com/addons/Microsoft-Edge-Extensions-Home"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-primary hover:underline"
+            >
+              Edge Add-ons
+              <ExternalLink className="h-3 w-3" />
+            </a>
           </div>
-        )}
 
-        {searchResults.length > 0 && (
-          <div className="space-y-0.5 rounded-apple border border-border/70 bg-popover p-1 shadow-apple-button">
-            {searchResults.map((result) => (
-              <button
-                key={result.id}
-                type="button"
-                onClick={() => selectSearchResult(result)}
-                className="flex w-full items-start gap-2.5 rounded-apple-sm px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-secondary"
-              >
-                <Search className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <p className="break-words font-medium sm:truncate">
-                    {result.name}
-                  </p>
-                  {result.developer && (
-                    <p className="text-xs text-muted-foreground">
-                      {result.developer}
+          <InputWithHistory
+            data-testid="edge-input"
+            placeholder="扩展名称、ID、ProductId 或商店链接"
+            value={extensionQuery}
+            onChange={onInputChange}
+            history={history.items}
+            onSelectHistory={(value) =>
+              onInputChange({
+                target: { value },
+              } as React.ChangeEvent<HTMLInputElement>)
+            }
+          />
+
+          {searching && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              搜索中...
+            </div>
+          )}
+
+          {searchResults.length > 0 && (
+            <div className="space-y-0.5 rounded-apple-sm border border-border/70 bg-popover p-1 shadow-apple-button">
+              {searchResults.map((result) => (
+                <button
+                  key={result.id}
+                  type="button"
+                  onClick={() => selectSearchResult(result)}
+                  className="flex w-full items-start gap-2.5 rounded-apple-sm px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-secondary"
+                >
+                  <Search className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words font-medium sm:truncate">
+                      {result.name}
                     </p>
-                  )}
-                </div>
+                    {result.developer && (
+                      <p className="text-xs text-muted-foreground">
+                        {result.developer}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-1 flex flex-wrap gap-2">
+            {[
+              {
+                label: "uBlock Origin Lite",
+                value: "cimighlppcgcoapaliogpjjdehbnofhn",
+              },
+              {
+                label: "沉浸式翻译",
+                value: "amkbmndfnliijdhojkpoglbnaaahippg",
+              },
+            ].map((example) => (
+              <button
+                key={example.label}
+                type="button"
+                onClick={() =>
+                  onInputChange({
+                    target: { value: example.value },
+                  } as React.ChangeEvent<HTMLInputElement>)
+                }
+                className="rounded-apple-sm bg-background px-2.5 py-1 text-xs text-muted-foreground shadow-apple-button transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                试试 {example.label}
               </button>
             ))}
           </div>
-        )}
-
-        <div className="mt-1 flex flex-wrap gap-2">
-          {[
-            {
-              label: "uBlock Origin Lite",
-              value: "cimighlppcgcoapaliogpjjdehbnofhn",
-            },
-            {
-              label: "沉浸式翻译",
-              value: "amkbmndfnliijdhojkpoglbnaaahippg",
-            },
-          ].map((example) => (
-            <button
-              key={example.label}
-              type="button"
-              onClick={() =>
-                onInputChange({
-                  target: { value: example.value },
-                } as React.ChangeEvent<HTMLInputElement>)
-              }
-              className="rounded-full bg-background px-2.5 py-1 text-xs text-muted-foreground shadow-apple-button transition-colors hover:bg-secondary hover:text-foreground"
-            >
-              试试 {example.label}
-            </button>
-          ))}
         </div>
-      </div>
 
-      <Button
-        type="submit"
-        disabled={loading}
-        className="w-full"
-        data-testid="edge-submit"
-      >
-        {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <LoadingSpinner />
-            解析中...
-          </span>
-        ) : (
-          <span className="flex items-center justify-center gap-2">
-            解析扩展信息
-          </span>
-        )}
-      </Button>
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full"
+          data-testid="edge-submit"
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <LoadingSpinner />
+              解析中...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              解析扩展信息
+            </span>
+          )}
+        </Button>
 
-      {extensionInfo && (
-        <div className="space-y-4">
-          <Card className="border border-border/70 bg-secondary/40 shadow-apple">
-            <CardContent className="p-4 sm:p-5">
-              <div className="space-y-2 text-sm">
-                {extensionInfo.name && (
-                  <p className="break-words font-medium text-foreground">
-                    {extensionInfo.name}
-                  </p>
-                )}
-                {extensionInfo.developer && (
-                  <p className="text-muted-foreground">
-                    开发者: {extensionInfo.developer}
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
-                  {extensionInfo.version && <span>版本: {extensionInfo.version}</span>}
-                  {extensionInfo.category && <span>分类: {extensionInfo.category}</span>}
-                  {typeof extensionInfo.rating === "number" && (
-                    <span className="inline-flex items-center gap-1">
-                      <Star className="h-3.5 w-3.5 fill-current" />
-                      {extensionInfo.rating.toFixed(1)}
-                      {typeof extensionInfo.ratingCount === "number" &&
-                        ` (${extensionInfo.ratingCount})`}
-                    </span>
-                  )}
-                </div>
-                {description && (
-                  <p className="break-words text-muted-foreground">
-                    描述：{description}
-                  </p>
-                )}
-                <p className="text-muted-foreground">ID: {extensionInfo.id}</p>
-              </div>
-            </CardContent>
-          </Card>
+        {extensionInfo && (
+          <div className="space-y-4">
+            <DownloadResultCard
+              title={extensionInfo.name || "Edge 扩展"}
+              eyebrow="CRX"
+              description={description}
+              metadata={[
+                {
+                  icon: Fingerprint,
+                  label: "ID",
+                  value: extensionInfo.id,
+                },
+                ...(extensionInfo.developer
+                  ? [
+                      {
+                        icon: UserRound,
+                        label: "开发者",
+                        value: `开发者: ${extensionInfo.developer}`,
+                      },
+                    ]
+                  : []),
+                ...(extensionInfo.version
+                  ? [
+                      {
+                        icon: BadgeInfo,
+                        label: "版本",
+                        value: `版本: ${extensionInfo.version}`,
+                      },
+                    ]
+                  : []),
+                ...(extensionInfo.category
+                  ? [
+                      {
+                        icon: Package,
+                        label: "分类",
+                        value: `分类: ${extensionInfo.category}`,
+                      },
+                    ]
+                  : []),
+                ...(typeof extensionInfo.rating === "number"
+                  ? [
+                      {
+                        icon: Star,
+                        label: "评分",
+                        value: `${extensionInfo.rating.toFixed(1)}${
+                          typeof extensionInfo.ratingCount === "number"
+                            ? ` (${extensionInfo.ratingCount})`
+                            : ""
+                        }`,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
             <Button
@@ -264,49 +302,29 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
       )}
 
       {downloadProgress && (
-        <Card className="border border-border/70 bg-secondary/40 shadow-apple">
-          <CardContent className="p-4 sm:p-5">
-            <div className="space-y-3">
-              <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-                <span className="font-medium text-foreground">
-                  {downloadProgress.status === "downloading" && "下载中..."}
-                  {downloadProgress.status === "converting" && "转换中..."}
-                  {downloadProgress.status === "completed" && "下载完成"}
-                  {downloadProgress.status === "error" && "下载出错"}
-                </span>
-                <div className="flex items-center justify-between gap-2 sm:justify-end">
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    {downloadProgress.totalBytes > 0
-                      ? `${(downloadProgress.bytesDownloaded / 1024 / 1024).toFixed(1)} / ${(downloadProgress.totalBytes / 1024 / 1024).toFixed(1)} MB`
-                      : `${Math.round(downloadProgress.progress)}%`}
-                  </span>
-                  {(downloadProgress.status === "downloading" ||
-                    downloadProgress.status === "converting") && (
-                    <button
-                      type="button"
-                      onClick={cancelDownload}
-                      className="text-muted-foreground transition-colors hover:text-foreground"
-                      title="取消下载"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
-                  style={{ width: `${downloadProgress.progress}%` }}
-                />
-              </div>
-              {downloadProgress.error && (
-                <p className="text-xs text-destructive">
-                  {downloadProgress.error}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <ProgressCard
+          title={
+            <>
+              {downloadProgress.status === "downloading" && "下载中..."}
+              {downloadProgress.status === "converting" && "转换中..."}
+              {downloadProgress.status === "completed" && "下载完成"}
+              {downloadProgress.status === "error" && "下载出错"}
+            </>
+          }
+          value={
+            downloadProgress.totalBytes > 0
+              ? `${(downloadProgress.bytesDownloaded / 1024 / 1024).toFixed(1)} / ${(downloadProgress.totalBytes / 1024 / 1024).toFixed(1)} MB`
+              : `${Math.round(downloadProgress.progress)}%`
+          }
+          progress={downloadProgress.progress}
+          error={downloadProgress.error}
+          onCancel={
+            downloadProgress.status === "downloading" ||
+            downloadProgress.status === "converting"
+              ? cancelDownload
+              : undefined
+          }
+        />
       )}
 
       {(downloadUrls.crx || downloadUrls.zip) && (
@@ -339,6 +357,7 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
           ]}
         />
       )}
-    </form>
+      </form>
+    </FeatureWorkspace>
   );
 }

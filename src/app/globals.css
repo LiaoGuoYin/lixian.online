@@ -39,10 +39,10 @@
 
 @theme {
   /* Border radius */
-  --radius-apple: 12px;
+  --radius-apple: 8px;
   --radius-apple-sm: 8px;
-  --radius-apple-lg: 16px;
-  --radius-apple-xl: 20px;
+  --radius-apple-lg: 8px;
+  --radius-apple-xl: 8px;
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -53,13 +53,13 @@
   /* Font size */
   --text-display: clamp(3rem, 8vw, 6rem);
   --text-display--line-height: 1.1;
-  --text-display--letter-spacing: -0.025em;
+  --text-display--letter-spacing: 0;
   --text-headline: clamp(2rem, 5vw, 3rem);
   --text-headline--line-height: 1.2;
-  --text-headline--letter-spacing: -0.015em;
+  --text-headline--letter-spacing: 0;
   --text-title: 1.5rem;
   --text-title--line-height: 1.3;
-  --text-title--letter-spacing: -0.01em;
+  --text-title--letter-spacing: 0;
   --text-body: 1rem;
   --text-body--line-height: 1.5;
   --text-caption: 0.875rem;
@@ -107,31 +107,31 @@
 @layer base {
   :root {
     /* Apple-inspired color palette */
-    --background: 255 255 255;
-    --foreground: 29 29 31;
-    --card: 255 255 255;
-    --card-foreground: 29 29 31;
-    --popover: 255 255 255;
-    --popover-foreground: 29 29 31;
-    --primary: 240 48 80;
+    --background: 249 250 248;
+    --foreground: 20 24 28;
+    --card: 255 255 252;
+    --card-foreground: 20 24 28;
+    --popover: 255 255 252;
+    --popover-foreground: 20 24 28;
+    --primary: 214 54 72;
     --primary-foreground: 255 255 255;
-    --secondary: 245 245 247;
-    --secondary-foreground: 29 29 31;
-    --muted: 250 250 252;
-    --muted-foreground: 134 142 150;
-    --accent: 240 48 80;
+    --secondary: 237 241 238;
+    --secondary-foreground: 20 24 28;
+    --muted: 244 246 244;
+    --muted-foreground: 97 107 114;
+    --accent: 35 148 138;
     --accent-foreground: 255 255 255;
     --destructive: 255 59 48;
     --destructive-foreground: 255 255 255;
-    --border: 229 229 234;
-    --input: 229 229 234;
-    --ring: 240 48 80;
+    --border: 214 220 216;
+    --input: 214 220 216;
+    --ring: 214 54 72;
     --chart-1: 52 199 89;
     --chart-2: 255 149 0;
     --chart-3: 255 59 48;
     --chart-4: 88 86 214;
     --chart-5: 255 45 85;
-    --radius: 12px;
+    --radius: 8px;
 
     /* Apple-specific design tokens */
     --apple-gray-1: 142 142 147;
@@ -143,25 +143,25 @@
   }
 
   .dark {
-    --background: 0 0 0;
-    --foreground: 255 255 255;
-    --card: 28 28 30;
-    --card-foreground: 255 255 255;
-    --popover: 28 28 30;
-    --popover-foreground: 255 255 255;
-    --primary: 248 64 96;
+    --background: 13 16 18;
+    --foreground: 238 242 240;
+    --card: 25 30 32;
+    --card-foreground: 238 242 240;
+    --popover: 25 30 32;
+    --popover-foreground: 238 242 240;
+    --primary: 238 81 95;
     --primary-foreground: 255 255 255;
-    --secondary: 44 44 46;
-    --secondary-foreground: 255 255 255;
-    --muted: 44 44 46;
-    --muted-foreground: 142 142 147;
-    --accent: 248 64 96;
+    --secondary: 35 42 44;
+    --secondary-foreground: 238 242 240;
+    --muted: 35 42 44;
+    --muted-foreground: 148 158 160;
+    --accent: 50 181 166;
     --accent-foreground: 255 255 255;
     --destructive: 255 69 58;
     --destructive-foreground: 255 255 255;
-    --border: 58 58 60;
-    --input: 58 58 60;
-    --ring: 248 64 96;
+    --border: 61 70 72;
+    --input: 61 70 72;
+    --ring: 238 81 95;
     --chart-1: 48 209 88;
     --chart-2: 255 159 10;
     --chart-3: 255 69 58;
@@ -195,7 +195,11 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     min-height: 100vh;
-    background: rgb(var(--background));
+    background:
+      linear-gradient(90deg, rgba(20, 24, 28, 0.04) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(214, 54, 72, 0.06), transparent 24rem),
+      rgb(var(--background));
+    background-size: 48px 48px, 100% 100%, auto;
     overflow-x: clip;
   }
 
@@ -204,21 +208,21 @@
     font-size: clamp(3rem, 8vw, 6rem);
     font-weight: 700;
     line-height: 1.1;
-    letter-spacing: -0.025em;
+    letter-spacing: 0;
   }
 
   .text-headline {
     font-size: clamp(2rem, 5vw, 3rem);
     font-weight: 600;
     line-height: 1.2;
-    letter-spacing: -0.015em;
+    letter-spacing: 0;
   }
 
   .text-title {
     font-size: 1.5rem;
     font-weight: 600;
     line-height: 1.3;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
 
   .text-body {
