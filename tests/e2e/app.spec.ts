@@ -25,6 +25,13 @@ test("VSCode flow generates a direct VSIX link", async ({ page }) => {
   await page.getByTestId("vscode-input").fill(vscodeExtensionUrl);
   await page.getByTestId("vscode-submit").click();
 
+  await expect(
+    page.getByText("Claude Code for VS Code", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Harness the power of Claude Code without leaving your IDE."),
+  ).toBeVisible();
+
   await page.getByRole("button", { name: "选择版本" }).click();
   await page.getByRole("button", { name: "1.2.3" }).click();
 
@@ -47,6 +54,10 @@ test("Chrome flow prepares CRX and ZIP downloads", async ({ page }) => {
   await expect(
     page.getByText("A fast and trusted content blocker."),
   ).toBeVisible();
+  await expect(page.getByAltText("uBlock Origin 图标")).toHaveAttribute(
+    "src",
+    /sample-chrome-icon/,
+  );
 
   await page.getByTestId("chrome-download-both").click();
 
@@ -68,6 +79,33 @@ test("Chrome flow prepares CRX and ZIP downloads", async ({ page }) => {
   );
 });
 
+test("Chrome flow offers enriched search suggestions before resolving details", async ({
+  page,
+}) => {
+  await mockChromeApis(page);
+
+  await page.goto("/");
+  await page.getByTestId("tab-chrome").click();
+
+  await page.getByTestId("chrome-input").fill("ublock");
+  await expect(
+    page.getByText("uBlock Origin", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("A fast and trusted content blocker."),
+  ).toBeVisible();
+  await expect(page.getByAltText("uBlock Origin 图标").first()).toHaveAttribute(
+    "src",
+    /sample-chrome-icon/,
+  );
+
+  await page
+    .getByRole("button", { name: /uBlock Origin/ })
+    .first()
+    .click();
+  await expect(page.getByTestId("chrome-input")).toHaveValue(chromeExtensionId);
+});
+
 test("Agent panel waits for a real query before copyable prompt/API", async ({
   page,
 }) => {
@@ -75,13 +113,68 @@ test("Agent panel waits for a real query before copyable prompt/API", async ({
   await page.getByTestId("tab-chrome").click();
 
   const chromePanel = page.getByTestId("panel-chrome");
+  const agentToggle = page.getByTestId("agent-panel-toggle");
+
+  await expect(agentToggle).toHaveAttribute("aria-pressed", "false");
+  await expect(agentToggle).toContainText("启用 Agent");
+  await expect(chromePanel.getByTestId("agent-empty-state")).toHaveCount(0);
+  await expect(chromePanel.getByRole("button", { name: "接入说明" })).toHaveCount(
+    0,
+  );
+  await agentToggle.click();
   const emptyState = chromePanel.getByTestId("agent-empty-state");
+  await expect(agentToggle).toHaveAttribute("aria-pressed", "true");
+  await expect(agentToggle).toContainText("隐藏 Agent");
+  await expect(emptyState).toBeVisible();
+  await agentToggle.click();
+  await expect(agentToggle).toHaveAttribute("aria-pressed", "false");
+  await expect(emptyState).toHaveCount(0);
+  await expect(chromePanel.getByRole("button", { name: "接入说明" })).toHaveCount(
+    0,
+  );
+  await agentToggle.click();
+  await expect(agentToggle).toHaveAttribute("aria-pressed", "true");
+
+  await chromePanel.getByRole("button", { name: "使用说明" }).click();
+  const guideDialog = page.getByRole("dialog", { name: "使用说明" });
+  await expect(guideDialog).toBeVisible();
+  await expect(
+    guideDialog.getByRole("link", { name: /打开 Chrome Web Store/ }),
+  ).toHaveAttribute(
+    "href",
+    "https://chromewebstore.google.com/category/extensions",
+  );
+  await expect(guideDialog).toContainText("复制页面链接");
+  await expect(guideDialog).toContainText("Extension ID / URL");
+  await expect(guideDialog).toContainText(
+    "搜索或粘贴扩展 ID，下载 CRX 并在浏览器内转换 ZIP。",
+  );
+  await guideDialog.getByRole("button", { name: "关闭" }).click();
+  await expect(guideDialog).toHaveCount(0);
+
+  await expect(
+    chromePanel.getByRole("button", { name: "接入说明" }),
+  ).toBeVisible();
+  await expect(chromePanel.getByText("Agent 接入指南")).toHaveCount(0);
+  await chromePanel.getByRole("button", { name: "接入说明" }).click();
+  const agentDialog = page.getByRole("dialog", { name: "Agent 接入" });
+  await expect(agentDialog).toBeVisible();
+  await expect(agentDialog).toContainText("Codex MCP");
+  await expect(agentDialog).toContainText("HTTP API");
+  await agentDialog.getByRole("button", { name: "关闭" }).click();
+  await expect(agentDialog).toHaveCount(0);
 
   await expect(emptyState).toBeVisible();
   await expect(emptyState).toContainText("需要输入查询内容");
   await expect(emptyState).toContainText("扩展名称、ID 或 Web Store URL");
   await expect(chromePanel.getByTestId("agent-prompt-copy")).toBeDisabled();
+  await expect(chromePanel.getByTestId("agent-prompt-copy")).toContainText(
+    "需要输入",
+  );
   await expect(chromePanel.getByTestId("agent-api-copy")).toBeDisabled();
+  await expect(chromePanel.getByTestId("agent-api-copy")).toContainText(
+    "需要输入",
+  );
   await expect(chromePanel.getByTestId("agent-prompt-content")).toHaveCount(
     0,
   );
@@ -111,7 +204,13 @@ test("Agent panel waits for a real query before copyable prompt/API", async ({
   await expect(prompt).toHaveCSS("max-height", "none");
   await expect(prompt).toHaveCSS("overflow-y", "visible");
   await expect(chromePanel.getByTestId("agent-prompt-copy")).toBeEnabled();
+  await expect(chromePanel.getByTestId("agent-prompt-copy")).toContainText(
+    "复制",
+  );
   await expect(chromePanel.getByTestId("agent-api-copy")).toBeEnabled();
+  await expect(chromePanel.getByTestId("agent-api-copy")).toContainText(
+    "复制",
+  );
 
   await chromePanel.getByTestId("agent-api-copy").click();
   const copiedText = await page.evaluate(
@@ -145,8 +244,9 @@ test("Edge flow resolves a store URL and prepares CRX and ZIP downloads", async 
   await expect(
     page.getByText("uBlock Origin Lite", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("开发者: Raymond Hill")).toBeVisible();
-  await expect(page.getByText("分类: Productivity")).toBeVisible();
+  await expect(page.getByText("Raymond Hill")).toBeVisible();
+  await expect(page.getByText("Productivity")).toBeVisible();
+  await expect(page.getByText("482.9K")).toBeVisible();
 
   await page.getByTestId("edge-download-both").click();
 
@@ -273,6 +373,7 @@ test("Docker flow explains keyword-like image parse failures and lets users pick
         short_description: "Apache Kafka is an open-source event streaming platform.",
         star_count: 1234,
         pull_count: 123456,
+        is_official: true,
       },
     ],
   });
@@ -288,6 +389,9 @@ test("Docker flow explains keyword-like image parse failures and lets users pick
     page.getByText(/Docker 镜像不能按关键词直接解析/),
   ).toBeVisible();
   await expect(page.getByTestId("docker-candidate-apache-kafka")).toBeVisible();
+  await expect(page.getByText("Official")).toBeVisible();
+  await expect(page.getByText("1.2K")).toBeVisible();
+  await expect(page.getByText("123.5K")).toBeVisible();
 
   await page.getByTestId("docker-candidate-apache-kafka").click();
   await expect(page.getByTestId("docker-input")).toHaveValue("apache/kafka");
@@ -320,6 +424,10 @@ test("MSStore flow renders a download link from a store URL", async ({
   await expect(page.getByTestId("msstore-download-link")).toHaveAttribute(
     "href",
     msstoreDownloadUrl,
+  );
+  await expect(page.getByAltText("Windows Terminal 图标")).toHaveAttribute(
+    "src",
+    /sample-terminal-icon/,
   );
 });
 

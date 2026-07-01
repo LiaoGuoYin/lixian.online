@@ -79,6 +79,11 @@ export function useChromeDownloader(initialValue?: string) {
     setExtensionInfo({
       id: result.id,
       name: result.name,
+      description: result.description,
+      author: result.author,
+      rating: result.rating,
+      userCount: result.userCount,
+      iconUrl: result.iconUrl,
     });
     setSearchResults([]);
     setDownloadUrls({});
@@ -107,6 +112,11 @@ export function useChromeDownloader(initialValue?: string) {
           ...prev,
           ...detail,
           name: detail.name || prev?.name,
+          description: detail.description || prev?.description,
+          author: detail.author || prev?.author,
+          rating: detail.rating ?? prev?.rating,
+          userCount: detail.userCount || prev?.userCount,
+          iconUrl: detail.iconUrl || prev?.iconUrl,
         }));
 
       } catch (error) {

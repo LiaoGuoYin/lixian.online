@@ -10,7 +10,6 @@ import { DownloadResultCard } from "@/shared/ui/download-result-card";
 import { FeatureWorkspace } from "@/shared/ui/feature-workspace";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import { buildAgentPayload, buildAgentPrompt } from "@/shared/lib/agent-prompts";
-import { MicrosoftStoreIcon } from "@/shared/ui/icons";
 import { useMemo, useState } from "react";
 import { Building2, Files, Fingerprint, Globe, Package, ExternalLink } from "lucide-react";
 import { useMSStoreDownloader } from "../hooks/useMSStoreDownloader";
@@ -163,11 +162,13 @@ function toReadableOption(entry: FileOptionEntry): SearchableSelectOption {
 interface MSStoreDownloaderProps {
   defaultValue?: string;
   onQueryChange?: (q: string) => void;
+  agentPanelVisible?: boolean;
 }
 
 export default function MSStoreDownloader({
   defaultValue,
   onQueryChange: onQuerySync,
+  agentPanelVisible,
 }: MSStoreDownloaderProps) {
   const { toast } = useToast();
   const history = useHistory("history:msstore");
@@ -240,13 +241,17 @@ export default function MSStoreDownloader({
 
   return (
     <FeatureWorkspace
-      icon={MicrosoftStoreIcon}
-      title="Microsoft Store 安装包"
-      description="解析 Store 标识，展示可下载的 MSIX、APPX 或 Bundle 文件。"
+      humanGuide={{
+        sourceLabel: "Microsoft Store",
+        sourceUrl: "https://apps.microsoft.com/",
+        inputLabel: "Store URL / ProductId",
+        detail: "解析 Store 标识，展示可下载的 MSIX、APPX 或 Bundle 文件。",
+      }}
       agentPrompt={agentPrompt}
       agentPayload={buildAgentPayload("msstore", query)}
       agentInputReady={agentInputReady}
       agentInputHint="Store URL、ProductId、PackageFamilyName 或 CategoryId"
+      agentPanelVisible={agentPanelVisible}
     >
       <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5">
         <div className="space-y-3">
@@ -329,6 +334,8 @@ export default function MSStoreDownloader({
                   title={result.title || "Microsoft Store 应用"}
                   eyebrow="MSIX"
                   description={result.description}
+                  imageUrl={result.iconUrl}
+                  imageAlt={`${result.title || result.productId} 图标`}
                   metadata={[
                     {
                       icon: Building2,

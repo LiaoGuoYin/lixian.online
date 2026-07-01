@@ -19,8 +19,8 @@ const EXAMPLES: MSStoreExample[] = [
     value: "https://apps.microsoft.com/detail/9n0dx20hk701",
   },
   {
-    label: "Python 3.13",
-    value: "https://apps.microsoft.com/detail/9pnrbtzxmb4z",
+    label: "Codex",
+    value: "https://apps.microsoft.com/detail/9plm9xgg6vks",
   },
 ];
 

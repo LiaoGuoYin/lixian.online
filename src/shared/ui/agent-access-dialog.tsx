@@ -15,9 +15,25 @@ import {
   buildRuntimeUrl,
   useRuntimeUrlBase,
 } from "@/shared/lib/runtime-url";
-import { Button } from "@/shared/ui/button";
+import { Button, type ButtonProps } from "@/shared/ui/button";
 
-export function AgentAccessDialog() {
+interface AgentAccessDialogProps {
+  triggerLabel?: string;
+  triggerIcon?: typeof Bot;
+  triggerVariant?: ButtonProps["variant"];
+  triggerSize?: ButtonProps["size"];
+  triggerClassName?: string;
+  triggerIconClassName?: string;
+}
+
+export function AgentAccessDialog({
+  triggerLabel = "Agent 接入",
+  triggerIcon: TriggerIcon = Bot,
+  triggerVariant = "outline",
+  triggerSize = "sm",
+  triggerClassName = "gap-1.5 bg-card",
+  triggerIconClassName = "h-3.5 w-3.5 text-primary",
+}: AgentAccessDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const urlBase = useRuntimeUrlBase();
@@ -55,13 +71,13 @@ export function AgentAccessDialog() {
     <>
       <Button
         type="button"
-        variant="outline"
-        size="sm"
-        className="gap-1.5 bg-card"
+        variant={triggerVariant}
+        size={triggerSize}
+        className={triggerClassName}
         onClick={() => setOpen(true)}
       >
-        <Bot className="h-3.5 w-3.5 text-primary" />
-        Agent 接入
+        <TriggerIcon className={triggerIconClassName} />
+        {triggerLabel}
       </Button>
 
       {open && (

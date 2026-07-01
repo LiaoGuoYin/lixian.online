@@ -9,8 +9,10 @@ import {
 import { FeatureWorkspace } from "@/shared/ui/feature-workspace";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import { ProgressCard } from "@/shared/ui/progress-card";
-import { buildAgentPayload, buildAgentPrompt } from "@/shared/lib/agent-prompts";
+import { ResultThumbnail } from "@/shared/ui/result-thumbnail";
 import { EdgeIcon } from "@/shared/ui/icons";
+import { buildAgentPayload, buildAgentPrompt } from "@/shared/lib/agent-prompts";
+import { formatCompactNumber } from "@/shared/lib/format";
 import {
   BadgeInfo,
   Download,
@@ -19,18 +21,23 @@ import {
   Fingerprint,
   Loader2,
   Package,
-  Search,
   Star,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 import { useEdgeDownloader } from "@/features/edge/hooks/useEdgeDownloader";
 
 interface Props {
   defaultValue?: string;
   onQueryChange?: (q: string) => void;
+  agentPanelVisible?: boolean;
 }
 
-export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
+export default function EdgeDownloader({
+  defaultValue,
+  onQueryChange,
+  agentPanelVisible,
+}: Props) {
   const { toast } = useToast();
   const history = useHistory("history:msedge");
   const {
@@ -96,13 +103,18 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
 
   return (
     <FeatureWorkspace
-      icon={EdgeIcon}
-      title="Edge 扩展离线包"
-      description="解析 Add-ons 链接、CRX ID 或 ProductId，输出 CRX 与 ZIP。"
+      humanGuide={{
+        sourceLabel: "Edge Add-ons",
+        sourceUrl:
+          "https://microsoftedge.microsoft.com/addons/Microsoft-Edge-Extensions-Home",
+        inputLabel: "Extension ID / ProductId / URL",
+        detail: "解析 Add-ons 链接、CRX ID 或 ProductId，输出 CRX 与 ZIP。",
+      }}
       agentPrompt={agentPrompt}
       agentPayload={buildAgentPayload("msedge", extensionQuery)}
       agentInputReady={agentInputReady}
       agentInputHint="扩展名称、CRX ID、ProductId 或 Add-ons URL"
+      agentPanelVisible={agentPanelVisible}
     >
       <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5">
         <div className="space-y-3">
@@ -146,9 +158,13 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
                   key={result.id}
                   type="button"
                   onClick={() => selectSearchResult(result)}
-                  className="flex w-full items-start gap-2.5 rounded-apple-sm px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-secondary"
+                  className="flex w-full items-start gap-3 rounded-apple-sm px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-secondary"
                 >
-                  <Search className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                  <ResultThumbnail
+                    src={result.iconUrl}
+                    alt={`${result.name} 图标`}
+                    fallback={EdgeIcon}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="break-words font-medium sm:truncate">
                       {result.name}
@@ -158,6 +174,14 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
                         {result.developer}
                       </p>
                     )}
+                    {result.description && (
+                      <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                        {result.description}
+                      </p>
+                    )}
+                    <p className="mt-1 font-mono text-[11px] text-muted-foreground/80">
+                      {result.id.slice(0, 12)}…
+                    </p>
                   </div>
                 </button>
               ))}
@@ -215,6 +239,8 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
               title={extensionInfo.name || "Edge 扩展"}
               eyebrow="CRX"
               description={description}
+              imageUrl={extensionInfo.iconUrl}
+              imageAlt={`${extensionInfo.name || extensionInfo.id} 图标`}
               metadata={[
                 {
                   icon: Fingerprint,
@@ -226,7 +252,7 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
                       {
                         icon: UserRound,
                         label: "开发者",
-                        value: `开发者: ${extensionInfo.developer}`,
+                        value: extensionInfo.developer,
                       },
                     ]
                   : []),
@@ -235,7 +261,7 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
                       {
                         icon: BadgeInfo,
                         label: "版本",
-                        value: `版本: ${extensionInfo.version}`,
+                        value: extensionInfo.version,
                       },
                     ]
                   : []),
@@ -244,7 +270,7 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
                       {
                         icon: Package,
                         label: "分类",
-                        value: `分类: ${extensionInfo.category}`,
+                        value: extensionInfo.category,
                       },
                     ]
                   : []),
@@ -255,9 +281,20 @@ export default function EdgeDownloader({ defaultValue, onQueryChange }: Props) {
                         label: "评分",
                         value: `${extensionInfo.rating.toFixed(1)}${
                           typeof extensionInfo.ratingCount === "number"
-                            ? ` (${extensionInfo.ratingCount})`
+                            ? ` (${formatCompactNumber(extensionInfo.ratingCount)})`
                             : ""
                         }`,
+                      },
+                    ]
+                  : []),
+                ...(typeof extensionInfo.activeInstallCount === "number"
+                  ? [
+                      {
+                        icon: UsersRound,
+                        label: "用户",
+                        value: formatCompactNumber(
+                          extensionInfo.activeInstallCount,
+                        ),
                       },
                     ]
                   : []),

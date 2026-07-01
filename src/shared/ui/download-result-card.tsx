@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import {
   Fragment,
   type ComponentType,
@@ -31,6 +32,8 @@ interface Props extends Omit<HTMLAttributes<HTMLElement>, "title"> {
   title?: ReactNode;
   eyebrow?: ReactNode;
   description?: ReactNode;
+  imageUrl?: string;
+  imageAlt?: string;
   metadata?: DownloadResultMeta[];
   rows?: DownloadResultRow[];
   footer?: ReactNode;
@@ -40,13 +43,23 @@ export function DownloadResultCard({
   title,
   eyebrow,
   description,
+  imageUrl,
+  imageAlt = "",
   metadata = [],
   rows = [],
   footer,
   className,
   ...props
 }: Props) {
-  if (!title && !description && metadata.length === 0 && rows.length === 0) {
+  if (
+    !title &&
+    !eyebrow &&
+    !description &&
+    !imageUrl &&
+    metadata.length === 0 &&
+    rows.length === 0 &&
+    !footer
+  ) {
     return null;
   }
 
@@ -58,25 +71,39 @@ export function DownloadResultCard({
       )}
       {...props}
     >
-      {(title || eyebrow || description || metadata.length > 0) && (
+      {(title || eyebrow || description || imageUrl || metadata.length > 0) && (
         <div className="space-y-4 border-b border-border/60 p-4 sm:p-5">
-          {(title || eyebrow || description) && (
-            <div className="space-y-1.5">
-              {eyebrow && (
-                <div className="text-xs font-medium text-primary">
-                  {eyebrow}
-                </div>
+          {(title || eyebrow || description || imageUrl) && (
+            <div className="flex min-w-0 items-start gap-3">
+              {imageUrl && (
+                <img
+                  src={imageUrl}
+                  alt={imageAlt}
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  className="h-12 w-12 shrink-0 rounded-apple-sm border border-border/60 bg-background object-cover"
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
+                />
               )}
-              {title && (
-                <h3 className="break-words text-base font-semibold leading-snug text-foreground sm:text-lg">
-                  {title}
-                </h3>
-              )}
-              {description && (
-                <div className="text-sm leading-relaxed text-muted-foreground">
-                  {description}
-                </div>
-              )}
+              <div className="min-w-0 space-y-1.5">
+                {eyebrow && (
+                  <div className="text-xs font-medium text-primary">
+                    {eyebrow}
+                  </div>
+                )}
+                {title && (
+                  <h3 className="break-words text-base font-semibold leading-snug text-foreground sm:text-lg">
+                    {title}
+                  </h3>
+                )}
+                {description && (
+                  <div className="text-sm leading-relaxed text-muted-foreground">
+                    {description}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -98,12 +125,12 @@ export function DownloadResultCard({
           <div className="text-xs font-medium text-muted-foreground">
             下载项
           </div>
-        {rows.map((row, index) => (
-          <Fragment key={row.testId ?? `${index}-${row.href}`}>
-            {index > 0 && <div className="border-t border-border/40" />}
-            <DownloadResultRow {...row} />
-          </Fragment>
-        ))}
+          {rows.map((row, index) => (
+            <Fragment key={row.testId ?? `${index}-${row.href}`}>
+              {index > 0 && <div className="border-t border-border/40" />}
+              <DownloadResultRow {...row} />
+            </Fragment>
+          ))}
         </div>
       )}
 

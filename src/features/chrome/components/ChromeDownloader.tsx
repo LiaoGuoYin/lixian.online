@@ -9,28 +9,33 @@ import {
 import { FeatureWorkspace } from "@/shared/ui/feature-workspace";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import { ProgressCard } from "@/shared/ui/progress-card";
-import { buildAgentPayload, buildAgentPrompt } from "@/shared/lib/agent-prompts";
+import { ResultThumbnail } from "@/shared/ui/result-thumbnail";
 import { ChromeIcon } from "@/shared/ui/icons";
+import { buildAgentPayload, buildAgentPrompt } from "@/shared/lib/agent-prompts";
 import {
   BadgeInfo,
   Download,
   FileArchive,
   Fingerprint,
   Package,
-  Search,
   Loader2,
   ExternalLink,
+  Star,
+  UserRound,
+  UsersRound,
 } from "lucide-react";
 import { useChromeDownloader } from "../hooks/useChromeDownloader";
 
 interface Props {
   defaultValue?: string;
   onQueryChange?: (q: string) => void;
+  agentPanelVisible?: boolean;
 }
 
 export default function ChromeDownloader({
   defaultValue,
   onQueryChange,
+  agentPanelVisible,
 }: Props) {
   const { toast } = useToast();
   const history = useHistory("history:chrome");
@@ -92,13 +97,17 @@ export default function ChromeDownloader({
 
   return (
     <FeatureWorkspace
-      icon={ChromeIcon}
-      title="Chrome 扩展离线包"
-      description="搜索或粘贴扩展 ID，下载 CRX 并在浏览器内转换 ZIP。"
+      humanGuide={{
+        sourceLabel: "Chrome Web Store",
+        sourceUrl: "https://chromewebstore.google.com/category/extensions",
+        inputLabel: "Extension ID / URL",
+        detail: "搜索或粘贴扩展 ID，下载 CRX 并在浏览器内转换 ZIP。",
+      }}
       agentPrompt={agentPrompt}
       agentPayload={buildAgentPayload("chrome", extensionUrl)}
       agentInputReady={agentInputReady}
       agentInputHint="扩展名称、ID 或 Web Store URL"
+      agentPanelVisible={agentPanelVisible}
     >
       <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5">
         <div className="space-y-3">
@@ -141,14 +150,25 @@ export default function ChromeDownloader({
                   onClick={() => {
                     selectSearchResult(result);
                   }}
-                  className="flex w-full items-start gap-2.5 rounded-apple-sm px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-secondary sm:items-center"
+                  className="flex w-full items-start gap-3 rounded-apple-sm px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-secondary"
                 >
-                  <Search className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 break-words sm:truncate">
-                    {result.name}
-                  </span>
-                  <span className="ml-auto hidden flex-shrink-0 text-xs text-muted-foreground sm:inline">
-                    {result.id.slice(0, 8)}…
+                  <ResultThumbnail
+                    src={result.iconUrl}
+                    alt={`${result.name} 图标`}
+                    fallback={ChromeIcon}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block break-words font-medium sm:truncate">
+                      {result.name}
+                    </span>
+                    {result.description && (
+                      <span className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                        {result.description}
+                      </span>
+                    )}
+                    <span className="mt-1 block font-mono text-[11px] text-muted-foreground/80">
+                      {result.id.slice(0, 12)}…
+                    </span>
                   </span>
                 </button>
               ))}
@@ -205,6 +225,8 @@ export default function ChromeDownloader({
               title={extensionInfo.name || "Chrome 扩展"}
               eyebrow="CRX"
               description={extensionInfo.description}
+              imageUrl={extensionInfo.iconUrl}
+              imageAlt={`${extensionInfo.name || extensionInfo.id} 图标`}
               metadata={[
                 {
                   icon: Fingerprint,
@@ -218,6 +240,33 @@ export default function ChromeDownloader({
                         icon: BadgeInfo,
                         label: "版本",
                         value: extensionInfo.version,
+                      },
+                    ]
+                  : []),
+                ...(extensionInfo.author
+                  ? [
+                      {
+                        icon: UserRound,
+                        label: "发布者",
+                        value: extensionInfo.author,
+                      },
+                    ]
+                  : []),
+                ...(typeof extensionInfo.rating === "number"
+                  ? [
+                      {
+                        icon: Star,
+                        label: "评分",
+                        value: extensionInfo.rating.toFixed(1),
+                      },
+                    ]
+                  : []),
+                ...(extensionInfo.userCount
+                  ? [
+                      {
+                        icon: UsersRound,
+                        label: "用户",
+                        value: extensionInfo.userCount,
                       },
                     ]
                   : []),

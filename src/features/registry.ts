@@ -12,6 +12,7 @@ export type TabIcon = ComponentType<{ className?: string }>;
 export interface DownloaderProps {
   defaultValue?: string;
   onQueryChange?: (q: string) => void;
+  agentPanelVisible?: boolean;
 }
 
 export interface FeatureTabConfig {

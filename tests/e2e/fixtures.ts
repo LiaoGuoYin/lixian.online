@@ -33,6 +33,8 @@ type MockDockerOptions = {
     short_description?: string;
     star_count?: number;
     pull_count?: number;
+    is_official?: boolean;
+    is_automated?: boolean;
   }>;
 };
 
@@ -51,8 +53,32 @@ export async function mockVsCodeApi(page: Page) {
         {
           extensions: [
             {
+              displayName: "Claude Code for VS Code",
+              shortDescription:
+                "Harness the power of Claude Code without leaving your IDE.",
+              publisher: {
+                displayName: "Anthropic",
+                publisherName: "anthropic",
+              },
+              statistics: [
+                { statisticName: "install", value: 19198698 },
+                { statisticName: "averagerating", value: 3.78 },
+                { statisticName: "ratingcount", value: 720 },
+              ],
               versions: [
-                { version: "1.2.3" },
+                {
+                  version: "1.2.3",
+                  lastUpdated: "2026-06-30T18:09:48.797Z",
+                  assetUri:
+                    "https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/1.2.3/sample",
+                  files: [
+                    {
+                      assetType: "Microsoft.VisualStudio.Services.Icons.Default",
+                      source:
+                        "https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/1.2.3/sample/Microsoft.VisualStudio.Services.Icons.Default",
+                    },
+                  ],
+                },
                 { version: "1.2.2" },
                 { version: "1.2.3" },
               ],
@@ -65,11 +91,27 @@ export async function mockVsCodeApi(page: Page) {
 }
 
 export async function mockChromeApis(page: Page) {
+  await page.route("**/api/chrome/search**", async (route) => {
+    await fulfillJson(route, {
+      results: [
+        {
+          id: chromeExtensionId,
+          name: "uBlock Origin",
+          description: "A fast and trusted content blocker.",
+          iconUrl:
+            "https://lh3.googleusercontent.com/sample-chrome-icon=s128-rj-sc0x00ffffff",
+        },
+      ],
+    });
+  });
+
   await page.route("**/api/chrome/detail**", async (route) => {
     await fulfillJson(route, {
       id: chromeExtensionId,
       name: "uBlock Origin",
       description: "A fast and trusted content blocker.",
+      iconUrl:
+        "https://lh3.googleusercontent.com/sample-chrome-icon=s128-rj-sc0x00ffffff",
     });
   });
 
@@ -225,6 +267,8 @@ export async function mockMsStoreApi(
       title: "Windows Terminal",
       publisherName: "Microsoft Corporation",
       description: "The new Windows Terminal.",
+      iconUrl:
+        "https://store-images.s-microsoft.com/image/apps.8232.sample-terminal-icon",
       packageFamilyNames: ["Microsoft.WindowsTerminal_8wekyb3d8bbwe"],
       market: "CN",
       language: "zh-cn",

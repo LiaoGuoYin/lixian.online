@@ -27,6 +27,11 @@ export interface ChromeDownloadProgress {
 export interface ChromeSearchResult {
   id: string;
   name: string;
+  description?: string;
+  author?: string;
+  rating?: number;
+  userCount?: string;
+  iconUrl?: string;
 }
 
 export interface ChromeWebStoreResponse {

@@ -110,6 +110,8 @@ class DockerService {
         short_description?: string;
         star_count?: number;
         pull_count?: number;
+        is_official?: boolean;
+        is_automated?: boolean;
       }) => {
         const repoNameParts = item.repo_name?.split('/') ?? [];
         const hasNamespace = repoNameParts.length > 1;
@@ -121,6 +123,8 @@ class DockerService {
           shortDescription: item.short_description || '',
           starCount: item.star_count || 0,
           pullCount: item.pull_count || 0,
+          isOfficial: item.is_official,
+          isAutomated: item.is_automated,
         };
       }).filter((item: DockerSearchCandidate) => item.repository);
     } catch (error) {

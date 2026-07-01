@@ -61,8 +61,20 @@ export function useVSCodeDownloader(initialValue?: string) {
           throw new Error("请输入有效的 VSCode 插件 URL");
         }
 
-        const versions = await vscodeService.getVersionList(extensionInfo);
-        setVersionList(versions);
+        const metadata = await vscodeService.getExtensionMetadata(extensionInfo);
+        setVersionList(metadata.versionList);
+        setExtensionInfo((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...metadata,
+                version:
+                  prev.version && metadata.versionList.includes(prev.version)
+                    ? prev.version
+                    : null,
+              }
+            : prev,
+        );
       } catch (error) {
         throw error;
       } finally {

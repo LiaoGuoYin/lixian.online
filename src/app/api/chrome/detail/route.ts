@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { site } from '@/shared/lib/site';
+import { parseChromeStoreHtml } from '../store-html';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,18 +31,11 @@ export async function GET(request: NextRequest) {
 
     const html = await response.text();
 
-    // Extract name from <title>Extension Name - Chrome 应用商店</title>
-    const titleMatch = html.match(/<title>(.+?)\s*[-–—]\s*Chrome[^<]*<\/title>/);
-    const name = titleMatch?.[1]?.trim() || undefined;
-
-    // Extract description from <meta name="description" content="...">
-    const descMatch = html.match(/meta\s+name="description"\s+content="([^"]*)"/);
-    const description = descMatch?.[1]?.trim() || undefined;
+    const parsed = parseChromeStoreHtml(html);
 
     return NextResponse.json({
       id: extensionId,
-      name,
-      description,
+      ...parsed,
     });
   } catch (error) {
     return NextResponse.json(

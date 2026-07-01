@@ -41,6 +41,10 @@ class ChromeService {
         id: extensionId,
         name: data.name || undefined,
         description: data.description || undefined,
+        author: data.author || undefined,
+        rating: typeof data.rating === "number" ? data.rating : undefined,
+        userCount: data.userCount || undefined,
+        iconUrl: data.iconUrl || undefined,
       };
     } catch {
       return { id: extensionId };

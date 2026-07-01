@@ -12,6 +12,13 @@ interface RgFileRow {
   size: string;
 }
 
+interface StoreImage {
+  ImagePurpose?: string;
+  Uri?: string;
+  Width?: number;
+  Height?: number;
+}
+
 function isDisplayCatalogBigId(value: string): boolean {
   return /^[A-Za-z0-9]{12}$/.test(value);
 }
@@ -143,6 +150,37 @@ function stripHtml(value: string): string {
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function normalizeImageUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith("//")) return `https:${url}`;
+  return url;
+}
+
+function pickStoreIcon(images: StoreImage[]): string | undefined {
+  const candidates = images
+    .filter((image) => typeof image.Uri === "string" && image.Uri)
+    .map((image) => ({
+      ...image,
+      purpose: String(image.ImagePurpose ?? "").toLowerCase(),
+      width: Number(image.Width ?? 0),
+      height: Number(image.Height ?? 0),
+    }));
+
+  const logos = candidates.filter((image) => image.purpose === "logo");
+  const tiles = candidates.filter((image) => image.purpose === "tile");
+  const sorted = [...(logos.length ? logos : tiles)].sort((a, b) => {
+    const aScore =
+      Math.abs((a.width || 100) - 100) +
+      Math.abs((a.height || 100) - 100);
+    const bScore =
+      Math.abs((b.width || 100) - 100) +
+      Math.abs((b.height || 100) - 100);
+    return aScore - bScore;
+  });
+
+  return normalizeImageUrl(sorted[0]?.Uri);
 }
 
 function normalizeRgLanguage(language: string): string {
@@ -317,6 +355,9 @@ export async function GET(request: NextRequest) {
 
     const displaySkuAvailabilities = ((product?.DisplaySkuAvailabilities ??
       []) as Array<Record<string, unknown>>) ?? [];
+    const images = Array.isArray(localized.Images)
+      ? (localized.Images as StoreImage[])
+      : [];
 
     const skus = displaySkuAvailabilities.map((entry) => {
       const sku = (entry.Sku ?? {}) as Record<string, unknown>;
@@ -389,6 +430,7 @@ export async function GET(request: NextRequest) {
       title: String(localized.ProductTitle ?? ""),
       publisherName: String(localized.PublisherName ?? ""),
       description: String(localized.ProductDescription ?? ""),
+      iconUrl: pickStoreIcon(images),
       packageFamilyNames: Array.isArray(productProperties.PackageFamilyNames)
         ? (productProperties.PackageFamilyNames as Array<unknown>).map((p) =>
             String(p),

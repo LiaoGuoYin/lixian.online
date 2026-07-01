@@ -124,6 +124,7 @@ export function useEdgeDownloader(initialValue?: string) {
           description: detail.description || prev?.description,
           shortDescription: detail.shortDescription || prev?.shortDescription,
           developer: detail.developer || prev?.developer,
+          iconUrl: detail.iconUrl || prev?.iconUrl,
         }));
       } finally {
         setLoading(false);

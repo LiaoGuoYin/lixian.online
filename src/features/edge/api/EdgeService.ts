@@ -48,7 +48,12 @@ class EdgeService {
         typeof data.shortDescription === "string"
           ? data.shortDescription.trim()
           : undefined,
-      developer: typeof data.developer === "string" ? data.developer : undefined,
+      developer:
+        typeof data.developer === "string"
+          ? data.developer
+          : typeof data.developerName === "string"
+            ? data.developerName
+            : undefined,
       category: typeof data.category === "string" ? data.category : undefined,
       rating:
         typeof data.averageRating === "number" ? data.averageRating : undefined,

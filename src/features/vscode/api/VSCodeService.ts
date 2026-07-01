@@ -1,5 +1,62 @@
-import { ExtensionInfo } from "@/features/vscode/types";
+import {
+  ExtensionInfo,
+  VSCodeExtensionMetadata,
+} from "@/features/vscode/types";
 import { post } from "@/shared/lib/http";
+
+interface MarketplaceStatistic {
+  statisticName?: string;
+  value?: number;
+}
+
+interface MarketplaceVersionFile {
+  assetType?: string;
+  source?: string;
+}
+
+interface MarketplaceVersion {
+  version?: string;
+  lastUpdated?: string;
+  files?: MarketplaceVersionFile[];
+  assetUri?: string;
+}
+
+interface MarketplaceExtension {
+  displayName?: string;
+  shortDescription?: string;
+  publisher?: {
+    displayName?: string;
+    publisherName?: string;
+  };
+  statistics?: MarketplaceStatistic[];
+  versions?: MarketplaceVersion[];
+}
+
+const INCLUDE_VERSIONS = 0x1;
+const INCLUDE_FILES = 0x2;
+const INCLUDE_STATISTICS = 0x80;
+const INCLUDE_ASSET_URI = 0x100;
+
+function getStatistic(
+  statistics: MarketplaceStatistic[] | undefined,
+  name: string,
+): number | undefined {
+  const found = statistics?.find(
+    (item) => item.statisticName?.toLowerCase() === name.toLowerCase(),
+  );
+  return typeof found?.value === "number" ? found.value : undefined;
+}
+
+function getIconUrl(version: MarketplaceVersion | undefined): string | undefined {
+  const iconFile = version?.files?.find(
+    (file) => file.assetType === "Microsoft.VisualStudio.Services.Icons.Default",
+  );
+  if (iconFile?.source) return iconFile.source;
+  if (version?.assetUri) {
+    return `${version.assetUri}/Microsoft.VisualStudio.Services.Icons.Default`;
+  }
+  return undefined;
+}
 
 class VSCodeService {
   extractExtensionInfo(url: string): ExtensionInfo {
@@ -33,13 +90,11 @@ class VSCodeService {
     };
   }
 
-  async getVersionList(
+  async getExtensionMetadata(
     extensionInfo: ExtensionInfo,
     maxVersions = 20,
-  ): Promise<string[]> {
+  ): Promise<VSCodeExtensionMetadata> {
     const url = `/api/vscode/query`;
-    // flags: 0x1 (Versions) | 0x200 (IncludeLatestVersionOnly excluded)
-    // Use 0x1 to only request version strings without heavy asset/file metadata
     const payload = {
       filters: [
         {
@@ -55,7 +110,11 @@ class VSCodeService {
           sortOrder: 0,
         },
       ],
-      flags: 0x1,
+      flags:
+        INCLUDE_VERSIONS |
+        INCLUDE_FILES |
+        INCLUDE_STATISTICS |
+        INCLUDE_ASSET_URI,
     };
 
     const response = await post(url, payload);
@@ -65,9 +124,33 @@ class VSCodeService {
       throw new Error("未找到该插件，请检查 URL 是否正确");
     }
 
-    const versionList: { version: string }[] = extensions[0].versions ?? [];
-    const unique = [...new Set(versionList.map((v) => v.version).filter(Boolean))];
-    return unique.slice(0, maxVersions);
+    const extension = extensions[0] as MarketplaceExtension;
+    const versions = extension.versions ?? [];
+    const unique = [
+      ...new Set(versions.map((version) => version.version).filter(Boolean)),
+    ] as string[];
+    const latestVersion = versions[0];
+
+    return {
+      versionList: unique.slice(0, maxVersions),
+      displayName: extension.displayName,
+      shortDescription: extension.shortDescription,
+      publisherDisplayName:
+        extension.publisher?.displayName ?? extension.publisher?.publisherName,
+      iconUrl: getIconUrl(latestVersion),
+      lastUpdated: latestVersion?.lastUpdated,
+      installCount: getStatistic(extension.statistics, "install"),
+      rating: getStatistic(extension.statistics, "averagerating"),
+      ratingCount: getStatistic(extension.statistics, "ratingcount"),
+    };
+  }
+
+  async getVersionList(
+    extensionInfo: ExtensionInfo,
+    maxVersions = 20,
+  ): Promise<string[]> {
+    const metadata = await this.getExtensionMetadata(extensionInfo, maxVersions);
+    return metadata.versionList;
   }
 
   async getDownloadUrl(extensionInfo: ExtensionInfo): Promise<string> {

@@ -8,6 +8,7 @@ import { FeatureWorkspace } from "@/shared/ui/feature-workspace";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import { ProgressCard } from "@/shared/ui/progress-card";
 import { buildAgentPayload, buildAgentPrompt } from "@/shared/lib/agent-prompts";
+import { formatCompactNumber } from "@/shared/lib/format";
 import { DockerIcon } from "@/shared/ui/icons";
 import {
   Download,
@@ -17,6 +18,9 @@ import {
   Cpu,
   HardDrive,
   Package,
+  BadgeCheck,
+  Bot,
+  Star,
 } from "lucide-react";
 import { useDockerDownloader } from "../hooks/useDockerDownloader";
 import { dockerService } from "../api/DockerService";
@@ -35,11 +39,13 @@ function formatBytes(bytes: number): string {
 interface Props {
   defaultValue?: string;
   onQueryChange?: (q: string) => void;
+  agentPanelVisible?: boolean;
 }
 
 export default function DockerDownloader({
   defaultValue,
   onQueryChange,
+  agentPanelVisible,
 }: Props) {
   const { toast } = useToast();
   const history = useHistory("history:docker");
@@ -114,13 +120,18 @@ export default function DockerDownloader({
 
   return (
     <FeatureWorkspace
-      icon={DockerIcon}
-      title="Docker 镜像离线包"
-      description="解析镜像标签和平台，将层数据打成 docker load 可导入的 TAR。"
+      humanGuide={{
+        sourceLabel: "Docker Hub",
+        sourceUrl: "https://hub.docker.com/search",
+        inputLabel: "Image ref / Docker Hub URL",
+        detail:
+          "解析镜像标签和平台，将层数据打成 docker load 可导入的 TAR。",
+      }}
       agentPrompt={agentPrompt}
       agentPayload={buildAgentPayload("docker", imageUrl)}
       agentInputReady={agentInputReady}
       agentInputHint="镜像名、tag 或 Docker Hub URL"
+      agentPanelVisible={agentPanelVisible}
     >
       <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5">
         <div className="space-y-3">
@@ -269,56 +280,83 @@ export default function DockerDownloader({
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </div>
-            {searchCandidates.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">
-                  候选镜像（Top {searchCandidates.length}）
-                </p>
+              {searchCandidates.length > 0 && (
                 <div className="space-y-2">
-                  {searchCandidates.map((candidate) => (
-                    <div
-                      key={`${candidate.namespace}/${candidate.repository}`}
-                      className="rounded-apple-sm border border-border/60 bg-background/70 p-3 transition-colors hover:bg-secondary/60"
-                    >
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground break-all sm:truncate">
-                            {candidate.namespace}/{candidate.repository}
-                          </p>
-                          {candidate.shortDescription && (
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {candidate.shortDescription}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => selectSearchCandidate(candidate)}
-                            data-testid={`docker-candidate-${candidate.namespace}-${candidate.repository}`}
-                          >
-                            选择
-                          </Button>
-                          <a
-                            href={dockerService.getDockerHubRepoUrl(
-                              candidate.namespace,
-                              candidate.repository,
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-apple-sm text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                            aria-label={`打开 ${candidate.namespace}/${candidate.repository} 的 Docker Hub 页面`}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
+                  <p className="text-xs text-muted-foreground">
+                    候选镜像（Top {searchCandidates.length}）
+                  </p>
+                  <div className="space-y-2">
+                    {searchCandidates.map((candidate) => (
+                      <div
+                        key={`${candidate.namespace}/${candidate.repository}`}
+                        className="rounded-apple-sm border border-border/60 bg-background/70 p-3 transition-colors hover:bg-secondary/60"
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="flex min-w-0 gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-apple-sm border border-border/60 bg-card">
+                              <DockerIcon className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="break-all text-sm font-medium text-foreground sm:truncate">
+                                {candidate.namespace}/{candidate.repository}
+                              </p>
+                              {candidate.shortDescription && (
+                                <p className="line-clamp-2 text-xs text-muted-foreground">
+                                  {candidate.shortDescription}
+                                </p>
+                              )}
+                              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                                {candidate.isOfficial && (
+                                  <span className="inline-flex items-center gap-1 text-primary">
+                                    <BadgeCheck className="h-3 w-3" />
+                                    Official
+                                  </span>
+                                )}
+                                {candidate.isAutomated && (
+                                  <span className="inline-flex items-center gap-1">
+                                    <Bot className="h-3 w-3" />
+                                    Automated
+                                  </span>
+                                )}
+                                <span className="inline-flex items-center gap-1">
+                                  <Star className="h-3 w-3" />
+                                  {formatCompactNumber(candidate.starCount)}
+                                </span>
+                                <span className="inline-flex items-center gap-1">
+                                  <Download className="h-3 w-3" />
+                                  {formatCompactNumber(candidate.pullCount)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2 sm:pt-0.5">
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => selectSearchCandidate(candidate)}
+                              data-testid={`docker-candidate-${candidate.namespace}-${candidate.repository}`}
+                            >
+                              选择
+                            </Button>
+                            <a
+                              href={dockerService.getDockerHubRepoUrl(
+                                candidate.namespace,
+                                candidate.repository,
+                              )}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-apple-sm text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                              aria-label={`打开 ${candidate.namespace}/${candidate.repository} 的 Docker Hub 页面`}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             </div>
           }
         />

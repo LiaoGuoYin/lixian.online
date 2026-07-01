@@ -1,5 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { site } from '@/shared/lib/site';
+import { parseChromeStoreHtml } from '../store-html';
+
+interface ChromeSearchResult {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  iconUrl?: string;
+}
+
+async function enrichResult(result: ChromeSearchResult): Promise<ChromeSearchResult> {
+  try {
+    const detailUrl = `https://chromewebstore.google.com/detail/${result.slug}/${result.id}`;
+    const response = await fetch(detailUrl, {
+      headers: {
+        'User-Agent': site.userAgent,
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) return result;
+    const html = await response.text();
+    const detail = parseChromeStoreHtml(html);
+    return {
+      ...result,
+      name: detail.name || result.name,
+      description: detail.description,
+      iconUrl: detail.iconUrl,
+    };
+  } catch {
+    return result;
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,7 +68,7 @@ export async function GET(request: NextRequest) {
     // Pattern: detail/{slug}/{32-char-id}
     const entryRegex = /detail\/([^/]+)\/([a-z]{32})/g;
     const seen = new Set<string>();
-    const results: { id: string; name: string }[] = [];
+    const results: ChromeSearchResult[] = [];
 
     let match;
     while ((match = entryRegex.exec(html)) !== null) {
@@ -46,10 +80,16 @@ export async function GET(request: NextRequest) {
         .split('-')
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
-      results.push({ id, name });
+      results.push({ id, slug, name });
     }
 
-    return NextResponse.json({ results: results.slice(0, 10) });
+    const topResults = results.slice(0, 10);
+    const enrichedHead = await Promise.all(topResults.slice(0, 5).map(enrichResult));
+    const enrichedResults = [...enrichedHead, ...topResults.slice(5)].map(
+      ({ slug: _slug, ...result }) => result,
+    );
+
+    return NextResponse.json({ results: enrichedResults });
   } catch (error) {
     return NextResponse.json(
       { error: `搜索失败: ${error}` },

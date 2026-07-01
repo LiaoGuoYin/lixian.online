@@ -51,6 +51,7 @@ export interface MSStoreResolveResult {
   title: string;
   publisherName: string;
   description: string;
+  iconUrl?: string;
   packageFamilyNames: string[];
   market: string;
   language: string;

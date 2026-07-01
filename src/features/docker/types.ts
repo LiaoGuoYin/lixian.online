@@ -31,6 +31,8 @@ export interface DockerSearchCandidate {
   shortDescription: string;
   starCount: number;
   pullCount: number;
+  isOfficial?: boolean;
+  isAutomated?: boolean;
 }
 
 export interface DockerPlatform {
