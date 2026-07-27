@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.6](https://github.com/LiaoGuoYin/lixian.online/compare/lixian-online-v0.5.5...lixian-online-v0.5.6) (2026-07-27)
+
+
+### Features
+
+* **msstore:** improve download metadata and link copying ([64a0d32](https://github.com/LiaoGuoYin/lixian.online/commit/64a0d3265d6d53e6a737b04ea8ce0a226692d4b4))
+
 ## [0.5.5](https://github.com/LiaoGuoYin/lixian.online/compare/lixian-online-v0.5.4...lixian-online-v0.5.5) (2026-07-02)
 
 
