@@ -143,24 +143,25 @@
   }
 
   .dark {
-    --background: 0 0 0;
-    --foreground: 255 255 255;
-    --card: 28 28 30;
-    --card-foreground: 255 255 255;
-    --popover: 28 28 30;
-    --popover-foreground: 255 255 255;
+    /* GitHub dark palette */
+    --background: 13 17 23;
+    --foreground: 230 237 243;
+    --card: 22 27 34;
+    --card-foreground: 230 237 243;
+    --popover: 22 27 34;
+    --popover-foreground: 230 237 243;
     --primary: 248 64 96;
     --primary-foreground: 255 255 255;
-    --secondary: 44 44 46;
-    --secondary-foreground: 255 255 255;
-    --muted: 44 44 46;
-    --muted-foreground: 142 142 147;
+    --secondary: 33 38 45;
+    --secondary-foreground: 230 237 243;
+    --muted: 22 27 34;
+    --muted-foreground: 139 148 158;
     --accent: 248 64 96;
     --accent-foreground: 255 255 255;
-    --destructive: 255 69 58;
+    --destructive: 248 81 73;
     --destructive-foreground: 255 255 255;
-    --border: 58 58 60;
-    --input: 58 58 60;
+    --border: 48 54 61;
+    --input: 48 54 61;
     --ring: 248 64 96;
     --chart-1: 48 209 88;
     --chart-2: 255 159 10;
@@ -168,12 +169,12 @@
     --chart-4: 94 92 230;
     --chart-5: 255 55 95;
 
-    --apple-gray-1: 142 142 147;
-    --apple-gray-2: 99 99 102;
-    --apple-gray-3: 72 72 74;
-    --apple-gray-4: 58 58 60;
-    --apple-gray-5: 44 44 46;
-    --apple-gray-6: 28 28 30;
+    --apple-gray-1: 139 148 158;
+    --apple-gray-2: 110 118 129;
+    --apple-gray-3: 72 79 88;
+    --apple-gray-4: 48 54 61;
+    --apple-gray-5: 33 38 45;
+    --apple-gray-6: 22 27 34;
   }
 }
 
@@ -236,17 +237,10 @@
 
   /* Apple-style glass morphism effect */
   .glass {
-    background: rgba(255, 255, 255, 0.8);
+    background: rgb(var(--background) / 0.8);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-  }
-
-  .glass-dark {
-    background: rgba(28, 28, 30, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgb(var(--border) / 0.3);
   }
 
   /* Apple-style shadows */

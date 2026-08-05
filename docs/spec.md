@@ -97,6 +97,15 @@ Lixian.Online 是一个面向受限网络环境的 Web 工具，帮助用户获�
 - 重新下载前会撤销旧的 Blob URL。
 - 组件卸载时也会撤销仍然存活的 Blob URL。
 
+### 3.5 主题切换（暗黑模式）
+
+- 支持三档：`light` / `dark` / `system`，默认 `system`
+- 页脚 GitHub 链接右侧的图标按钮点击循环 `light → dark → system`，图标对应显示 Sun / Moon / Monitor
+- 状态由 `src/hooks/useTheme.ts` 通过 `useSyncExternalStore` 提供，暴露 `theme` / `resolvedTheme` / `setTheme`
+- 选择持久化到 `localStorage['theme']`；`storage` 事件用于跨标签同步；`theme === 'system'` 时响应 `matchMedia('(prefers-color-scheme: dark)')` 变化
+- `src/app/layout.tsx` 的 `<head>` 注入同步 IIFE 脚本，在 body 渲染前给 `<html>` 加 `.dark`，避免首屏闪烁
+- 颜色统一由 `src/app/globals.css` 的 `.dark` 变量组定义（GitHub 暗色配色）；`.glass` 使用 `rgb(var(--background) / 0.8)` 自动跟随主题
+
 ## 4. 功能规格
 
 ### 4.1 VSCode 插件
@@ -479,3 +488,5 @@ pnpm build && pnpm start --hostname 127.0.0.1 --port 3100
 - MSStore URL / ProductId 识别
 - MSStore `.blockmap` 文件过滤
 - MSStore HTTP 下载代理回退
+- 主题切换三态循环与 `<html>.dark` / `localStorage['theme']` 同步
+- 主题选择在页面刷新后保持，且首屏无闪烁
